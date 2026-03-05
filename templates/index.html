@@ -1,0 +1,1988 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RiceScanAI – Deteksi Penyakit Daun Padi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --g-dark:  #1b5e20;
+    --g-mid:   #2e7d32;
+    --g-light: #66bb6a;
+    --g-pale:  #a5d6a7;
+    --g-ultra: #e8f5e9;
+    --accent:  #f9a825;
+    --white:   #ffffff;
+    --text:    #1a2e1a;
+    --text-muted: #4a6741;
+  }
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { font-family:'DM Sans',sans-serif; color:var(--text); background:#0d1f0d; overflow-x:hidden; }
+  ::-webkit-scrollbar { width:6px; }
+  ::-webkit-scrollbar-track { background:var(--g-dark); }
+  ::-webkit-scrollbar-thumb { background:var(--g-light); border-radius:3px; }
+
+  /* ── NAVBAR ── */
+  #navbar {
+    position:fixed; top:0; left:0; right:0; z-index:1000;
+    padding:1.25rem 2rem;
+    display:flex; align-items:center; justify-content:space-between;
+    transition:all .4s ease;
+  }
+  #navbar.solid {
+    background:rgba(13,31,13,.95);
+    backdrop-filter:blur(20px);
+    border-bottom:1px solid rgba(102,187,106,.15);
+    padding:.9rem 2rem;
+  }
+  .nav-logo {
+    display:flex; align-items:center; gap:.6rem;
+    font-family:'Plus Jakarta Sans',sans-serif; font-weight:800;
+    font-size:1.1rem; color:var(--white); text-decoration:none;
+  }
+  .nav-logo .leaf-icon {
+    width:34px; height:34px;
+    background:linear-gradient(135deg,var(--g-light),var(--g-mid));
+    border-radius:50% 10px 50% 10px;
+    display:flex; align-items:center; justify-content:center; display:flex;align-items:center;justify-content:center;
+  }
+  .nav-links { display:flex; align-items:center; gap:2rem; list-style:none; }
+  .nav-links a {
+    color:rgba(255,255,255,.75); text-decoration:none;
+    font-size:.9rem; font-weight:400; letter-spacing:.03em; transition:color .25s;
+  }
+  .nav-links a:hover { color:var(--g-light); }
+  .nav-badge {
+    background:rgba(102,187,106,.15); border:1px solid rgba(102,187,106,.4);
+    color:var(--g-light); font-size:.75rem; font-weight:500; letter-spacing:.05em;
+    padding:.35rem .75rem; border-radius:20px;
+    display:flex; align-items:center; gap:.4rem;
+  }
+  .nav-badge::before {
+    content:''; width:7px; height:7px; border-radius:50%;
+    background:var(--g-light); animation:pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100%{ box-shadow:0 0 0 0 rgba(102,187,106,.6); }
+    50%{ box-shadow:0 0 0 5px rgba(102,187,106,0); }
+  }
+  .hamburger { display:none; flex-direction:column; gap:5px; cursor:pointer; }
+  .hamburger span { width:24px; height:2px; background:white; transition:.3s; border-radius:2px; }
+
+  /* ── NAV USER AVATAR ── */
+  .nav-user { display:flex; align-items:center; position:relative; }
+
+  /* Profile trigger button */
+  .nav-profile-trigger {
+    display:inline-flex; align-items:center; gap:.55rem;
+    cursor:pointer; padding:.3rem .75rem .3rem .3rem;
+    border-radius:50px; border:1px solid rgba(255,255,255,.15);
+    background:rgba(255,255,255,.06);
+    transition:all .22s; user-select:none;
+  }
+  .nav-profile-trigger:hover { border-color:rgba(102,187,106,.5); background:rgba(102,187,106,.1); }
+  .nav-profile-trigger.open { border-color:rgba(102,187,106,.6); background:rgba(102,187,106,.12); }
+
+  .nav-user-avatar {
+    width:32px; height:32px; border-radius:50%;
+    background:linear-gradient(135deg,var(--g-light),var(--g-mid));
+    display:flex; align-items:center; justify-content:center; font-size:13px;
+    border:2px solid rgba(102,187,106,.5); flex-shrink:0; overflow:hidden;
+  }
+  .nav-user-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+
+  .nav-trigger-name {
+    color:rgba(255,255,255,.85); font-size:.85rem; font-weight:600;
+    max-width:110px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .nav-trigger-chevron {
+    color:rgba(255,255,255,.5); transition:transform .22s; flex-shrink:0;
+  }
+  .nav-profile-trigger.open .nav-trigger-chevron { transform:rotate(180deg); }
+
+  /* Dropdown panel */
+  .nav-profile-dropdown {
+    position:absolute; top:calc(100% + 10px); right:0;
+    width:230px;
+    background:rgba(10,20,12,.85);
+    backdrop-filter:blur(24px) saturate(1.8);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:18px;
+    box-shadow:0 20px 50px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.05) inset;
+    padding:.5rem;
+    opacity:0; pointer-events:none;
+    transform:translateY(-8px) scale(.97);
+    transition:opacity .22s, transform .22s cubic-bezier(.22,1,.36,1);
+    z-index:2000;
+  }
+  .nav-profile-dropdown.open {
+    opacity:1; pointer-events:all; transform:translateY(0) scale(1);
+  }
+
+  /* User info header inside dropdown */
+  .npd-header {
+    padding:.7rem .85rem .6rem;
+    border-bottom:1px solid rgba(255,255,255,.08);
+    margin-bottom:.3rem;
+  }
+  .npd-header-name {
+    font-family:'Plus Jakarta Sans',sans-serif; font-weight:800;
+    font-size:.92rem; color:#fff;
+  }
+  .npd-header-role {
+    font-size:.72rem; color:rgba(255,255,255,.45); margin-top:.1rem;
+  }
+
+  /* Menu items */
+  .npd-item {
+    display:flex; align-items:center; gap:.7rem;
+    padding:.58rem .85rem; border-radius:12px;
+    color:rgba(255,255,255,.7); font-size:.85rem; font-weight:500;
+    text-decoration:none; transition:all .18s; cursor:pointer;
+    border:none; background:none; width:100%; text-align:left;
+  }
+  .npd-item:hover { background:rgba(102,187,106,.12); color:#fff; }
+  .npd-item svg { opacity:.65; flex-shrink:0; transition:opacity .18s; }
+  .npd-item:hover svg { opacity:1; }
+  .npd-item.admin-item { color:#f9a825; }
+  .npd-item.admin-item:hover { background:rgba(249,168,37,.12); color:#f9a825; }
+  .npd-item.admin-item svg { color:#f9a825; }
+
+  /* Separator */
+  .npd-sep { height:1px; background:rgba(255,255,255,.08); margin:.3rem .5rem; }
+
+  /* Logout item */
+  .npd-item.logout-item { color:#ef9a9a; }
+  .npd-item.logout-item:hover { background:rgba(244,67,54,.12); color:#ef5350; }
+  .npd-item.logout-item svg { color:#ef9a9a; }
+
+  /* Unread badge inside dropdown */
+  .npd-badge {
+    margin-left:auto; background:#ef5350; color:#fff;
+    font-size:.62rem; font-weight:700;
+    padding:.1rem .4rem; border-radius:10px;
+  }
+
+  /* flash messages */
+  .flash-container {
+    position:fixed; top:72px; left:50%; transform:translateX(-50%);
+    z-index:999; width:100%; max-width:520px; padding:0 1rem;
+    display:flex; flex-direction:column; gap:.4rem;
+  }
+  .flash-msg {
+    padding:.7rem 1.1rem; border-radius:12px; font-size:.87rem;
+    font-family:'DM Sans',sans-serif; box-shadow:0 4px 16px rgba(0,0,0,.15);
+    display:flex; align-items:center; gap:.5rem; animation:fadeUp .35s ease;
+  }
+  .flash-danger  { background:#fdecea; color:#c62828; border:1px solid #f5c6cb; }
+  .flash-success { background:#e8f5e9; color:#2e7d32; border:1px solid #c8e6c9; }
+  .flash-warning { background:#fff8e1; color:#f57f17; border:1px solid #ffe082; }
+  .flash-info    { background:#e3f2fd; color:#1565c0; border:1px solid #bbdefb; }
+
+  /* ── HERO ── */
+  #beranda {
+    min-height:100vh;
+    background:radial-gradient(ellipse 80% 70% at 30% 40%,#1b5e20 0%,#0d1f0d 60%),
+               radial-gradient(ellipse 60% 60% at 80% 60%,#2e7d32 0%,transparent 60%);
+    display:flex; align-items:center;
+    padding:7rem 2rem 4rem; position:relative; overflow:hidden;
+  }
+  #beranda::before {
+    content:''; position:absolute; inset:0;
+    background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2366bb6a' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .orb { position:absolute; border-radius:50%; filter:blur(80px); pointer-events:none; }
+  .orb-1 { width:400px; height:400px; background:rgba(102,187,106,.12); top:-100px; right:-100px; }
+  .orb-2 { width:300px; height:300px; background:rgba(46,125,50,.18); bottom:-50px; left:20%; }
+  .orb-3 { width:200px; height:200px; background:rgba(249,168,37,.08); top:30%; right:15%; }
+  .hero-container {
+    max-width:1200px; margin:0 auto; width:100%;
+    display:grid; grid-template-columns:1fr 1fr; gap:4rem; align-items:center;
+    position:relative; z-index:1;
+  }
+  .hero-left { animation:fadeInLeft .9s ease both; }
+  .hero-tag {
+    display:inline-flex; align-items:center; gap:.5rem;
+    background:rgba(102,187,106,.12); border:1px solid rgba(102,187,106,.3);
+    color:var(--g-light); font-size:.8rem; letter-spacing:.08em; font-weight:500;
+    padding:.4rem 1rem; border-radius:20px; margin-bottom:1.5rem;
+  }
+  .hero-title {
+    font-family:'Plus Jakarta Sans',sans-serif; font-weight:800;
+    font-size:clamp(2.2rem,4.5vw,3.4rem);
+    line-height:1.15; color:var(--white); margin-bottom:1.25rem;
+  }
+  .hero-title span { color:var(--g-light); }
+  .hero-sub { color:rgba(255,255,255,.65); font-size:1.05rem; line-height:1.7; margin-bottom:2.5rem; max-width:480px; }
+  .hero-btns { display:flex; gap:1rem; flex-wrap:wrap; }
+  .btn-primary {
+    background:linear-gradient(135deg,var(--g-light),var(--g-mid));
+    color:var(--white); border:none; padding:.85rem 1.75rem;
+    font-family:'DM Sans',sans-serif; font-weight:500; font-size:.95rem;
+    border-radius:10px; cursor:pointer; transition:all .3s;
+    box-shadow:0 6px 24px rgba(102,187,106,.35);
+    text-decoration:none; display:inline-flex; align-items:center; gap:.5rem;
+  }
+  .btn-primary:hover { transform:translateY(-2px); box-shadow:0 10px 32px rgba(102,187,106,.5); }
+  .btn-secondary {
+    background:transparent; color:var(--white);
+    border:1.5px solid rgba(255,255,255,.3);
+    padding:.85rem 1.75rem; font-family:'DM Sans',sans-serif;
+    font-weight:500; font-size:.95rem; border-radius:10px;
+    cursor:pointer; transition:all .3s; text-decoration:none;
+    display:inline-flex; align-items:center; gap:.5rem;
+  }
+  .btn-secondary:hover { border-color:var(--g-light); color:var(--g-light); }
+  .hero-right { display:flex; align-items:center; justify-content:center; animation:fadeInRight .9s ease .3s both; }
+
+  /* ── HERO SCAN CARD ── */
+  .hero-scan-card {
+    width:100%;max-width:360px;
+    background:rgba(10,26,10,.85);
+    border:1px solid rgba(102,187,106,.25);
+    border-radius:20px;overflow:hidden;
+    backdrop-filter:blur(20px);
+    box-shadow:0 32px 80px rgba(0,0,0,.4), 0 0 0 1px rgba(102,187,106,.08);
+  }
+  .hsc-header {
+    display:flex;align-items:center;gap:.45rem;
+    padding:.75rem 1rem;border-bottom:1px solid rgba(102,187,106,.1);
+    background:rgba(0,0,0,.2);
+  }
+  .hsc-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .hsc-dot.red   {background:#ef5350}
+  .hsc-dot.yellow{background:#ffa726}
+  .hsc-dot.green {background:#66bb6a}
+  .hsc-title{font-size:.74rem;color:rgba(255,255,255,.4);margin-left:.25rem;font-weight:500}
+
+  .hsc-scan-area{padding:1.5rem 1.5rem 1.25rem}
+  .hsc-scan-frame{
+    border:1.5px dashed rgba(102,187,106,.35);
+    border-radius:14px;aspect-ratio:4/3;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:.65rem;position:relative;
+    background:rgba(102,187,106,.03);
+    overflow:hidden;
+  }
+  /* scan corners */
+  .hsc-corner{position:absolute;width:18px;height:18px;border-color:#66bb6a;border-style:solid}
+  .hsc-corner.tl{top:10px;left:10px;border-width:2px 0 0 2px;border-radius:4px 0 0 0}
+  .hsc-corner.tr{top:10px;right:10px;border-width:2px 2px 0 0;border-radius:0 4px 0 0}
+  .hsc-corner.bl{bottom:10px;left:10px;border-width:0 0 2px 2px;border-radius:0 0 0 4px}
+  .hsc-corner.br{bottom:10px;right:10px;border-width:0 2px 2px 0;border-radius:0 0 4px 0}
+  /* animated scan line */
+  .hsc-scan-line{
+    position:absolute;left:12px;right:12px;height:2px;
+    background:linear-gradient(90deg,transparent,rgba(102,187,106,.7),transparent);
+    animation:scanMove 2.5s ease-in-out infinite;top:20%;
+  }
+  @keyframes scanMove{0%,100%{top:15%;opacity:.4}50%{top:80%;opacity:1}}
+  .hsc-scan-icon{opacity:.45}
+  .hsc-scan-hint{font-size:.78rem;color:rgba(255,255,255,.35);font-weight:400}
+
+  .hsc-result{
+    margin:0 1.5rem 1rem;
+    background:rgba(102,187,106,.08);border:1px solid rgba(102,187,106,.2);
+    border-radius:10px;padding:.7rem 1rem;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .hsc-result-label{display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:rgba(255,255,255,.5)}
+  .hsc-result-badge{font-size:.78rem;font-weight:700;color:#ef9a9a;
+    background:rgba(244,67,54,.15);border:1px solid rgba(244,67,54,.3);
+    padding:.22rem .65rem;border-radius:20px}
+  /* ready badge replaces result badge */
+  .hsc-ready-badge{
+    display:inline-flex;align-items:center;gap:.4rem;
+    font-size:.78rem;font-weight:700;color:#66bb6a;
+    background:rgba(102,187,106,.12);border:1px solid rgba(102,187,106,.3);
+    padding:.22rem .75rem;border-radius:20px;
+  }
+  .hsc-ready-dot{
+    width:7px;height:7px;border-radius:50%;background:#66bb6a;flex-shrink:0;
+    animation:pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(102,187,106,.5)}50%{box-shadow:0 0 0 5px rgba(102,187,106,0)}}
+  /* hover effect for clickable card */
+  a.hero-scan-card:hover{
+    border-color:rgba(102,187,106,.45) !important;
+    box-shadow:0 36px 90px rgba(0,0,0,.5), 0 0 0 1px rgba(102,187,106,.15), 0 0 40px rgba(102,187,106,.08) !important;
+    transform:translateY(-3px);
+    transition:all .3s ease;
+  }
+  a.hero-scan-card:hover .hsc-scan-frame{border-color:rgba(102,187,106,.6);}
+  a.hero-scan-card{transition:all .3s ease;}
+
+  .hsc-stats{
+    display:flex;align-items:center;justify-content:space-around;
+    padding:.9rem 1rem;border-top:1px solid rgba(102,187,106,.1);
+  }
+  .hsc-stat{text-align:center}
+  .hsc-stat-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.05rem;font-weight:800;color:#66bb6a;line-height:1}
+  .hsc-stat-lbl{font-size:.65rem;color:rgba(255,255,255,.4);margin-top:.2rem}
+  .hsc-stat-div{width:1px;height:28px;background:rgba(102,187,106,.15)}
+  .hero-sc-badge {
+    display:inline-flex; align-items:center; gap:.5rem;
+    background:rgba(33,150,243,.1); border:1px solid rgba(33,150,243,.3);
+    color:#90caf9; font-size:.78rem; font-weight:500; letter-spacing:.06em;
+    padding:.35rem .9rem; border-radius:20px; margin-left:.5rem; vertical-align:middle;
+  }
+  @keyframes spin    { to{ transform:rotate(360deg); } }
+  @keyframes spinMe  { to{ transform:rotate(360deg); } }
+  @keyframes floatA { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+  @keyframes floatB { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
+  @keyframes fadeInLeft { from{opacity:0;transform:translateX(-30px)} to{opacity:1;transform:translateX(0)} }
+  @keyframes fadeInRight { from{opacity:0;transform:translateX(30px)} to{opacity:1;transform:translateX(0)} }
+
+  /* ── SHARED ── */
+  .section { padding:6rem 2rem; }
+  .section-inner { max-width:1200px; margin:0 auto; }
+  .section-label { font-size:.78rem; letter-spacing:.15em; font-weight:600; color:var(--g-light); text-transform:uppercase; margin-bottom:.75rem; }
+  .section-title { font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:clamp(1.8rem,3vw,2.6rem); line-height:1.2; margin-bottom:1rem; }
+  .section-sub { color:var(--text-muted); font-size:1.05rem; line-height:1.7; max-width:560px; }
+  .reveal { opacity:0; transform:translateY(30px); transition:opacity .7s ease,transform .7s ease; }
+  .reveal.visible { opacity:1; transform:translateY(0); }
+
+  /* ── TENTANG ── */
+  #tentang { background:var(--white); }
+  .tentang-grid { display:grid; grid-template-columns:1fr 1fr; gap:5rem; align-items:center; }
+  .tentang-img-wrap {
+    position:relative; border-radius:24px; overflow:hidden; aspect-ratio:4/3;
+    background:linear-gradient(135deg,var(--g-dark),var(--g-mid));
+    display:flex; align-items:center; justify-content:center;
+  }
+  .tentang-img-deco { width:90%; height:90%; display:flex; align-items:center; justify-content:center; }
+  .img-badge {
+    position:absolute; bottom:1.5rem; left:1.5rem;
+    background:rgba(255,255,255,.1); backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.2); border-radius:12px;
+    padding:.75rem 1rem; color:white; font-size:.85rem;
+  }
+  .img-badge strong { display:block; font-size:1.2rem; font-family:'Plus Jakarta Sans',sans-serif; }
+  .disease-list { list-style:none; margin-top:2rem; display:flex; flex-direction:column; gap:.85rem; }
+  .disease-list li {
+    display:flex; align-items:center; gap:1rem;
+    padding:1rem 1.25rem; border-radius:12px;
+    background:var(--g-ultra); border:1px solid rgba(102,187,106,.2);
+    font-weight:500; transition:all .3s;
+  }
+  .disease-list li:hover { background:rgba(102,187,106,.1); transform:translateX(4px); }
+  .disease-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+  .d1 { background:rgba(244,67,54,.12); } .d2 { background:rgba(255,152,0,.12); } .d3 { background:rgba(33,150,243,.12); }
+  .disease-list li span { color:var(--text-muted); font-size:.88rem; font-weight:400; }
+
+  /* ── STATISTIK ── */
+  #statistik { background:var(--g-ultra); }
+  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1.5rem; margin-top:3rem; }
+  .stat-card {
+    background:var(--white); border-radius:20px; padding:2rem 1.5rem; text-align:center;
+    border:1px solid rgba(102,187,106,.15); box-shadow:0 4px 24px rgba(0,0,0,.05);
+    transition:all .35s; position:relative; overflow:hidden;
+  }
+  .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--g-mid),var(--g-light)); }
+  .stat-card:hover { transform:translateY(-6px); box-shadow:0 12px 40px rgba(46,125,50,.15); }
+  .stat-icon { font-size:2rem; margin-bottom:.75rem; display:flex; align-items:center; justify-content:center; }
+  .stat-num { font-family:'Plus Jakarta Sans',sans-serif; font-size:2.6rem; font-weight:800; color:var(--g-mid); line-height:1; }
+  .stat-label { color:var(--text-muted); font-size:.9rem; margin-top:.5rem; }
+  .stat-suffix { font-size:1.8rem; }
+
+  /* ── SMART CITY ── */
+  #smartcity { background:linear-gradient(180deg,#0a1628 0%,#0d2137 50%,#0a1628 100%); position:relative; overflow:hidden; }
+  #smartcity::before {
+    content:''; position:absolute; inset:0;
+    background:url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2366bb6a' fill-opacity='0.025'%3E%3Cpath d='M0 0h40v40H0zm40 40h40v40H40z'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  #smartcity .section-title { color:var(--white); }
+  #smartcity .section-sub { color:rgba(255,255,255,.5); }
+  .city-skyline { position:absolute; bottom:0; left:0; right:0; height:120px; opacity:.06; pointer-events:none; }
+  .sc-banner {
+    background:linear-gradient(135deg,rgba(27,94,32,.3),rgba(13,31,13,.5));
+    border:1px solid rgba(102,187,106,.2); border-radius:20px; padding:2rem 2.5rem;
+    margin-bottom:4rem; display:flex; align-items:center; gap:2rem;
+    position:relative; z-index:1; backdrop-filter:blur(10px);
+  }
+  .sc-banner-icon { font-size:3rem; flex-shrink:0; }
+  .sc-banner-text h3 { font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:1.3rem; color:var(--white); margin-bottom:.5rem; }
+  .sc-banner-text p { color:rgba(255,255,255,.6); font-size:.95rem; line-height:1.7; }
+  .sc-badge {
+    margin-left:auto; flex-shrink:0;
+    background:rgba(33,150,243,.15); border:1px solid rgba(33,150,243,.4);
+    color:#90caf9; font-size:.78rem; font-weight:600; letter-spacing:.08em;
+    padding:.5rem 1rem; border-radius:20px; white-space:nowrap;
+    display:flex; align-items:center; gap:.4rem;
+  }
+  .sc-badge::before { content:''; width:7px; height:7px; border-radius:50%; background:#90caf9; animation:pulse-blue 2s infinite; }
+  @keyframes pulse-blue { 0%,100%{box-shadow:0 0 0 0 rgba(144,202,249,.6);} 50%{box-shadow:0 0 0 5px rgba(144,202,249,0);} }
+  .pilar-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; position:relative; z-index:1; }
+  .pilar-card { border-radius:20px; padding:2rem; border:1px solid rgba(255,255,255,.07); transition:all .35s; position:relative; overflow:hidden; cursor:default; }
+  .pilar-card::before { content:''; position:absolute; inset:0; opacity:0; transition:opacity .35s; border-radius:20px; }
+  .pilar-card:hover { transform:translateY(-6px); }
+  .pilar-card:hover::before { opacity:1; }
+  .pilar-economy { background:rgba(249,168,37,.06); border-color:rgba(249,168,37,.15); }
+  .pilar-economy::before { background:rgba(249,168,37,.05); }
+  .pilar-economy:hover { box-shadow:0 12px 40px rgba(249,168,37,.12); border-color:rgba(249,168,37,.3); }
+  .pilar-economy .pilar-dot { background:#f9a825; }
+  .pilar-economy .pilar-num { color:rgba(249,168,37,.2); }
+  .pilar-env { background:rgba(102,187,106,.06); border-color:rgba(102,187,106,.15); }
+  .pilar-env::before { background:rgba(102,187,106,.05); }
+  .pilar-env:hover { box-shadow:0 12px 40px rgba(102,187,106,.12); border-color:rgba(102,187,106,.3); }
+  .pilar-env .pilar-dot { background:#66bb6a; }
+  .pilar-env .pilar-num { color:rgba(102,187,106,.2); }
+  .pilar-gov { background:rgba(33,150,243,.06); border-color:rgba(33,150,243,.15); }
+  .pilar-gov::before { background:rgba(33,150,243,.05); }
+  .pilar-gov:hover { box-shadow:0 12px 40px rgba(33,150,243,.12); border-color:rgba(33,150,243,.3); }
+  .pilar-gov .pilar-dot { background:#2196f3; }
+  .pilar-gov .pilar-num { color:rgba(33,150,243,.2); }
+  .pilar-living { background:rgba(233,30,99,.06); border-color:rgba(233,30,99,.15); }
+  .pilar-living::before { background:rgba(233,30,99,.05); }
+  .pilar-living:hover { box-shadow:0 12px 40px rgba(233,30,99,.1); border-color:rgba(233,30,99,.3); }
+  .pilar-living .pilar-dot { background:#e91e63; }
+  .pilar-living .pilar-num { color:rgba(233,30,99,.2); }
+  .pilar-mobility { background:rgba(156,39,176,.06); border-color:rgba(156,39,176,.15); }
+  .pilar-mobility::before { background:rgba(156,39,176,.05); }
+  .pilar-mobility:hover { box-shadow:0 12px 40px rgba(156,39,176,.1); border-color:rgba(156,39,176,.3); }
+  .pilar-mobility .pilar-dot { background:#9c27b0; }
+  .pilar-mobility .pilar-num { color:rgba(156,39,176,.2); }
+  .pilar-people { background:rgba(0,188,212,.06); border-color:rgba(0,188,212,.15); }
+  .pilar-people::before { background:rgba(0,188,212,.05); }
+  .pilar-people:hover { box-shadow:0 12px 40px rgba(0,188,212,.1); border-color:rgba(0,188,212,.3); }
+  .pilar-people .pilar-dot { background:#00bcd4; }
+  .pilar-people .pilar-num { color:rgba(0,188,212,.2); }
+  .pilar-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:1.25rem; }
+  .pilar-icon-wrap { width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:1.5rem; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08); }
+  .pilar-num { font-family:'Plus Jakarta Sans',sans-serif; font-size:2.2rem; font-weight:800; line-height:1; }
+  .pilar-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:.4rem; vertical-align:middle; }
+  .pilar-tag { display:inline-flex; align-items:center; font-size:.72rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:rgba(255,255,255,.5); margin-bottom:.6rem; }
+  .pilar-card h3 { font-family:'Plus Jakarta Sans',sans-serif; font-size:1.05rem; font-weight:700; color:var(--white); margin-bottom:.6rem; }
+  .pilar-card p { color:rgba(255,255,255,.5); font-size:.88rem; line-height:1.65; }
+  .pilar-connection { margin-top:1rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,.06); display:flex; align-items:center; gap:.5rem; font-size:.8rem; color:rgba(255,255,255,.4); }
+  .pilar-connection strong { color:rgba(255,255,255,.65); }
+  .sc-ecosystem { margin-top:4rem; padding:2.5rem; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.07); border-radius:24px; position:relative; z-index:1; }
+  .sc-ecosystem h3 { font-family:'Plus Jakarta Sans',sans-serif; font-size:1.2rem; font-weight:800; color:var(--white); margin-bottom:.5rem; text-align:center; }
+  .sc-ecosystem p { color:rgba(255,255,255,.45); font-size:.9rem; text-align:center; margin-bottom:2rem; }
+  .ecosystem-flow { display:flex; align-items:center; justify-content:center; gap:0; flex-wrap:wrap; }
+  .eco-step { display:flex; flex-direction:column; align-items:center; gap:.5rem; padding:1.25rem 1rem; min-width:120px; }
+  .eco-icon { width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.5rem; border:1px solid rgba(102,187,106,.2); background:rgba(102,187,106,.08); }
+  .eco-label { font-size:.8rem; font-weight:500; color:rgba(255,255,255,.6); text-align:center; line-height:1.4; }
+  .eco-arrow { font-size:1.2rem; color:rgba(102,187,106,.4); padding:0 .25rem; align-self:center; margin-top:-.5rem; }
+
+  /* ── TEKNOLOGI ── */
+  #teknologi { background:#0d1f0d; }
+  #teknologi .section-title { color:var(--white); }
+  #teknologi .section-sub { color:rgba(255,255,255,.5); }
+  .tech-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1.5rem; margin-top:3rem; }
+  .tech-card { background:rgba(255,255,255,.04); border:1px solid rgba(102,187,106,.15); border-radius:20px; padding:2rem 1.5rem; text-align:center; transition:all .35s; cursor:default; }
+  .tech-card:hover { background:rgba(102,187,106,.08); border-color:rgba(102,187,106,.4); transform:translateY(-6px); }
+  .tech-icon { width:64px; height:64px; border-radius:16px; margin:0 auto 1.25rem; display:flex; align-items:center; justify-content:center; font-size:1.8rem; background:linear-gradient(135deg,rgba(102,187,106,.15),rgba(46,125,50,.25)); border:1px solid rgba(102,187,106,.25); }
+  .tech-card h3 { font-family:'Plus Jakarta Sans',sans-serif; color:var(--white); font-size:1.1rem; margin-bottom:.5rem; }
+  .tech-card p { color:rgba(255,255,255,.45); font-size:.88rem; line-height:1.6; }
+
+  /* ── FITUR ── */
+  #fitur { background:var(--white); }
+  .fitur-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; margin-top:3rem; }
+  .fitur-card { border-radius:20px; padding:2rem; border:1.5px solid rgba(102,187,106,.15); transition:all .35s; position:relative; overflow:hidden; }
+  .fitur-card::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,var(--g-ultra),rgba(255,255,255,0)); opacity:0; transition:opacity .35s; }
+  .fitur-card:hover::before { opacity:1; }
+  .fitur-card:hover { transform:translateY(-4px); box-shadow:0 12px 40px rgba(46,125,50,.12); border-color:var(--g-pale); }
+  .fitur-num { font-family:'Plus Jakarta Sans',sans-serif; font-size:3rem; font-weight:800; color:rgba(102,187,106,.15); line-height:1; margin-bottom:-.5rem; }
+  .fitur-icon { font-size:1.8rem; margin-bottom:.75rem; }
+  .fitur-card h3 { font-family:'Plus Jakarta Sans',sans-serif; font-size:1.05rem; margin-bottom:.5rem; color:var(--g-dark); }
+  .fitur-card p { color:var(--text-muted); font-size:.9rem; line-height:1.6; }
+
+  /* ── DETEKSI ── */
+  #deteksi { background:linear-gradient(160deg,#0d1f0d 0%,#1b5e20 50%,#0d1f0d 100%); }
+  #deteksi .section-title { color:var(--white); }
+  #deteksi .section-sub { color:rgba(255,255,255,.55); }
+  .detect-card {
+    max-width:720px; margin:3rem auto 0;
+    background:rgba(255,255,255,.06); backdrop-filter:blur(20px);
+    border:1px solid rgba(102,187,106,.25); border-radius:28px; padding:3rem;
+  }
+  .upload-zone {
+    border:2px dashed rgba(102,187,106,.4); border-radius:18px;
+    padding:2.5rem; text-align:center; cursor:pointer;
+    transition:all .3s; margin-bottom:1.5rem; position:relative;
+  }
+  .upload-zone:hover { border-color:var(--g-light); background:rgba(102,187,106,.05); }
+  .upload-zone input[type="file"] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+  .upload-icon { font-size:3rem; margin-bottom:.75rem; display:flex; align-items:center; justify-content:center; }
+  .upload-zone p { color:rgba(255,255,255,.7); font-size:.95rem; }
+  .upload-zone small { color:rgba(255,255,255,.4); font-size:.82rem; }
+  #preview-wrap { display:none; text-align:center; margin-bottom:1.5rem; }
+  #preview-img { max-width:100%; max-height:280px; border-radius:14px; border:2px solid rgba(102,187,106,.3); }
+  .btn-detect {
+    width:100%; padding:1rem; font-family:'Plus Jakarta Sans',sans-serif;
+    font-size:1rem; font-weight:700; letter-spacing:.05em;
+    background:linear-gradient(135deg,var(--g-light),var(--g-mid));
+    color:white; border:none; border-radius:14px; cursor:pointer;
+    transition:all .3s; box-shadow:0 6px 24px rgba(102,187,106,.3);
+    display:flex; align-items:center; justify-content:center; gap:.75rem;
+  }
+  .btn-detect:hover { transform:translateY(-2px); box-shadow:0 10px 32px rgba(102,187,106,.5); }
+  .btn-detect:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+  .spinner { width:22px; height:22px; border:3px solid rgba(255,255,255,.3); border-top-color:white; border-radius:50%; animation:spinMe .8s linear infinite; display:none; }
+  @keyframes spinMe { to{ transform:rotate(360deg); } }
+  .error-box {
+    background:rgba(244,67,54,.12); border:1px solid rgba(244,67,54,.4);
+    border-radius:14px; padding:1.25rem 1.5rem; margin-bottom:1.5rem;
+    color:#ef9a9a; font-size:.9rem; display:flex; align-items:center; gap:.75rem;
+  }
+  .error-box::before { content:''; font-size:1.1rem; flex-shrink:0; }
+  #result-area { margin-top:1.5rem; animation:fadeUp .5s ease; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  .result-box { background:rgba(102,187,106,.1); border:1px solid rgba(102,187,106,.3); border-radius:16px; padding:1.5rem; }
+  .result-label { color:rgba(255,255,255,.6); font-size:.85rem; margin-bottom:.25rem; }
+  .result-disease { font-family:'Plus Jakarta Sans',sans-serif; font-size:1.8rem; font-weight:800; color:var(--g-light); margin-bottom:.6rem; }
+  .result-desc { color:rgba(255,255,255,.65); font-size:.9rem; line-height:1.65; margin-bottom:.5rem; }
+  .result-saran {
+    background:rgba(102,187,106,.08); border-left:3px solid var(--g-light);
+    padding:.75rem 1rem; border-radius:0 8px 8px 0;
+    color:rgba(255,255,255,.7); font-size:.88rem; line-height:1.6; margin-bottom:1rem;
+  }
+  .result-saran strong { color:var(--g-light); display:block; margin-bottom:.25rem; font-size:.8rem; letter-spacing:.05em; text-transform:uppercase; }
+  .confidence-bar { height:8px; background:rgba(255,255,255,.1); border-radius:4px; overflow:hidden; margin-top:.4rem; }
+  .confidence-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,var(--g-mid),var(--g-light)); transition:width 1.2s ease; }
+  .btn-reset {
+    display:inline-flex; align-items:center; gap:.4rem; margin-top:1.25rem;
+    background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5);
+    padding:.4rem .95rem; border-radius:8px; cursor:pointer; font-size:.83rem;
+    font-family:'DM Sans',sans-serif; transition:all .25s;
+  }
+  .btn-reset:hover { border-color:var(--g-light); color:var(--g-light); }
+  .result-box.result-warn { background:rgba(249,168,37,.08); border-color:rgba(249,168,37,.3); }
+  .result-box.result-warn .result-disease { color:var(--accent); }
+
+  /* ── TIM ── */
+  #tim { background:var(--g-ultra); }
+  .tim-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; margin-top:3rem; }
+  .tim-card { background:var(--white); border-radius:24px; padding:2.5rem 2rem; text-align:center; border:1px solid rgba(102,187,106,.15); box-shadow:0 4px 20px rgba(0,0,0,.05); transition:all .35s; }
+  .tim-card:hover { transform:translateY(-8px); box-shadow:0 16px 48px rgba(46,125,50,.15); }
+  .tim-avatar { width:110px; height:110px; border-radius:50%; margin:0 auto 1.25rem; overflow:hidden; border:4px solid rgba(102,187,106,.3); background:#f5f5f5; }
+  .tim-avatar img { width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
+  .tim-card h3 { font-family:'Plus Jakarta Sans',sans-serif; font-size:1.15rem; margin-bottom:.25rem; }
+  .tim-role { color:var(--g-mid); font-size:.85rem; font-weight:600; letter-spacing:.03em; margin-bottom:.85rem; }
+  .tim-desc { color:var(--text-muted); font-size:.88rem; line-height:1.65; }
+
+  /* ── FOOTER ── */
+  footer { background:var(--g-dark); padding:3.5rem 2rem; text-align:center; position:relative; overflow:hidden; }
+  footer::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--g-light),transparent); }
+  .footer-logo { font-family:'Plus Jakarta Sans',sans-serif; font-size:1.4rem; font-weight:800; color:var(--white); margin-bottom:.5rem; }
+  .footer-logo span { color:var(--g-light); }
+  footer p { color:rgba(255,255,255,.45); font-size:.88rem; margin:.3rem 0; }
+  .footer-links { display:flex; justify-content:center; gap:2rem; margin:1.25rem 0; flex-wrap:wrap; }
+  .footer-links a { color:rgba(255,255,255,.5); text-decoration:none; font-size:.88rem; transition:color .25s; }
+  .footer-links a:hover { color:var(--g-light); }
+  .footer-powered { display:inline-flex; align-items:center; gap:.4rem; background:rgba(102,187,106,.1); border:1px solid rgba(102,187,106,.25); color:var(--g-light); font-size:.8rem; padding:.35rem .85rem; border-radius:20px; margin-top:1rem; }
+
+  /* ── GRAFIK RIWAYAT ── */
+  #grafik { background:#0d1f0d; position:relative; overflow:hidden; }
+  #grafik::before {
+    content:''; position:absolute; inset:0;
+    background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2366bb6a' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  #grafik .section-title { color:var(--white); }
+  #grafik .section-sub   { color:rgba(255,255,255,.5); }
+
+  .grafik-wrapper {
+    display:grid; grid-template-columns:1.3fr 1fr; gap:2rem; margin-top:3rem; align-items:start;
+  }
+
+  /* ── Histogram card ── */
+  .hist-card {
+    background:rgba(255,255,255,.04); border:1px solid rgba(102,187,106,.18);
+    border-radius:24px; padding:2rem; position:relative; overflow:hidden;
+  }
+  .hist-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg,transparent,var(--g-light),transparent);
+  }
+  .hist-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.75rem; }
+  .hist-title  { font-family:'Plus Jakarta Sans',sans-serif; font-size:.95rem; font-weight:700; color:var(--white); }
+  .hist-legend { display:flex; gap:1rem; flex-wrap:wrap; }
+  .hist-leg-item { display:flex; align-items:center; gap:.35rem; font-size:.72rem; color:rgba(255,255,255,.5); }
+  .hist-leg-dot  { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+  /* histogram axes */
+  .hist-chart { position:relative; }
+  .hist-y-axis {
+    position:absolute; left:0; top:0; bottom:40px;
+    display:flex; flex-direction:column; justify-content:space-between;
+    width:28px;
+  }
+  .hist-y-tick { font-size:.65rem; color:rgba(255,255,255,.25); text-align:right; line-height:1; }
+  .hist-plot-area { margin-left:36px; position:relative; }
+  /* grid lines */
+  .hist-grid {
+    position:absolute; left:0; right:0; top:0; bottom:40px;
+    display:flex; flex-direction:column; justify-content:space-between;
+    pointer-events:none;
+  }
+  .hist-grid-line { border-top:1px solid rgba(102,187,106,.07); width:100%; }
+
+  /* bars container */
+  .hist-bars {
+    display:flex; align-items:flex-end; gap:8px;
+    height:200px; padding-bottom:0; position:relative; z-index:1;
+  }
+  .hist-group {
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:0;
+    cursor:default;
+  }
+  .hist-bar-wrap {
+    width:100%; display:flex; gap:3px; align-items:flex-end;
+    height:190px; padding-bottom:0;
+  }
+  .hist-bar {
+    flex:1; border-radius:5px 5px 0 0; min-height:4px;
+    transition:filter .25s, transform .25s;
+    transform-origin:bottom;
+    position:relative;
+  }
+  .hist-bar:hover { filter:brightness(1.3); transform:scaleY(1.04); }
+  .hist-bar-blast  { background:linear-gradient(180deg,#ef5350,rgba(244,67,54,.4)); }
+  .hist-bar-blight { background:linear-gradient(180deg,#ffa726,rgba(255,152,0,.4)); }
+  .hist-bar-tungro { background:linear-gradient(180deg,#42a5f5,rgba(33,150,243,.4)); }
+  .hist-bar-sehat  { background:linear-gradient(180deg,#66bb6a,rgba(102,187,106,.4)); }
+
+  /* tooltip on bar hover */
+  .hist-bar::after {
+    content: attr(data-val);
+    position:absolute; top:-28px; left:50%; transform:translateX(-50%);
+    background:rgba(0,0,0,.8); color:#fff; font-size:.68rem; font-weight:700;
+    padding:.2rem .45rem; border-radius:5px; white-space:nowrap;
+    opacity:0; pointer-events:none; transition:opacity .2s;
+  }
+  .hist-bar:hover::after { opacity:1; }
+
+  /* x axis labels */
+  .hist-x-axis {
+    display:flex; gap:8px; margin-top:.5rem; padding-left:0;
+  }
+  .hist-x-label {
+    flex:1; text-align:center; font-size:.62rem; color:rgba(255,255,255,.3);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+
+  /* ── Summary stat cards ── */
+  .grafik-right { display:flex; flex-direction:column; gap:1.25rem; }
+  .scan-stat-card {
+    background:rgba(255,255,255,.04); border:1px solid rgba(102,187,106,.15);
+    border-radius:18px; padding:1.4rem 1.6rem;
+    display:flex; align-items:center; gap:1.1rem;
+    transition:background .25s, border-color .25s;
+  }
+  .scan-stat-card:hover { background:rgba(102,187,106,.07); border-color:rgba(102,187,106,.3); }
+  .scan-stat-ico {
+    width:48px; height:48px; border-radius:14px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:1.4rem;
+  }
+  .ico-blast  { background:rgba(244,67,54,.12);  border:1px solid rgba(244,67,54,.25); }
+  .ico-blight { background:rgba(255,152,0,.12);  border:1px solid rgba(255,152,0,.25); }
+  .ico-tungro { background:rgba(33,150,243,.12); border:1px solid rgba(33,150,243,.25); }
+  .ico-total  { background:rgba(102,187,106,.12);border:1px solid rgba(102,187,106,.25); }
+  .scan-stat-info { flex:1; }
+  .scan-stat-label { font-size:.75rem; color:rgba(255,255,255,.4); margin-bottom:.2rem; font-weight:600; letter-spacing:.04em; text-transform:uppercase; }
+  .scan-stat-val   { font-family:'Plus Jakarta Sans',sans-serif; font-size:1.7rem; font-weight:800; color:var(--white); line-height:1; }
+  .scan-stat-sub   { font-size:.72rem; color:rgba(255,255,255,.3); margin-top:.2rem; }
+  .scan-stat-bar   { height:3px; border-radius:2px; margin-top:.85rem; }
+  .bar-blast  { background:linear-gradient(90deg,#ef5350,rgba(244,67,54,.2)); }
+  .bar-blight { background:linear-gradient(90deg,#ffa726,rgba(255,152,0,.2)); }
+  .bar-tungro { background:linear-gradient(90deg,#42a5f5,rgba(33,150,243,.2)); }
+  .bar-total  { background:linear-gradient(90deg,var(--g-light),rgba(102,187,106,.2)); }
+
+  /* Donut chart mini */
+  .donut-wrap {
+    background:rgba(255,255,255,.04); border:1px solid rgba(102,187,106,.15);
+    border-radius:18px; padding:1.5rem; text-align:center;
+  }
+  .donut-title { font-family:'Plus Jakarta Sans',sans-serif; font-size:.88rem; font-weight:700; color:var(--white); margin-bottom:1.25rem; }
+  .donut-svg { overflow:visible; }
+  .donut-center-label { font-family:'Plus Jakarta Sans',sans-serif; font-size:1.1rem; font-weight:800; fill:var(--white); }
+  .donut-center-sub   { font-size:.6rem; fill:rgba(255,255,255,.4); }
+  .donut-legend { display:flex; justify-content:center; gap:1rem; margin-top:1rem; flex-wrap:wrap; }
+  .donut-leg-item { display:flex; align-items:center; gap:.3rem; font-size:.72rem; color:rgba(255,255,255,.55); }
+  .donut-leg-dot  { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+  /* period tabs */
+  .period-tabs { display:flex; gap:.4rem; }
+  .period-tab  {
+    padding:.28rem .7rem; border-radius:20px; font-size:.72rem; font-weight:700;
+    cursor:pointer; border:1.5px solid transparent; transition:all .2s;
+    color:rgba(255,255,255,.4); background:none;
+    font-family:'DM Sans',sans-serif;
+  }
+  .period-tab:hover  { color:rgba(255,255,255,.7); border-color:rgba(102,187,106,.3); }
+  .period-tab.active { background:rgba(102,187,106,.15); border-color:rgba(102,187,106,.4); color:var(--g-light); }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:768px){
+    .nav-links,.nav-badge { display:none; }
+    .nav-user { gap:.4rem; }
+    .nav-user-name span { display:none; }
+    .hamburger { display:flex; }
+    .nav-links.open { display:flex; flex-direction:column; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(13,31,13,.97); z-index:999; align-items:center; justify-content:center; font-size:1.3rem; gap:2.5rem; }
+    .hamburger.active span:nth-child(1){ transform:translateY(7px) rotate(45deg); }
+    .hamburger.active span:nth-child(2){ opacity:0; }
+    .hamburger.active span:nth-child(3){ transform:translateY(-7px) rotate(-45deg); }
+    .hero-container { grid-template-columns:1fr; gap:2rem; text-align:center; }
+    .hero-btns { justify-content:center; }
+    .hero-right { max-width:300px; margin:0 auto; }
+    .hero-sub { margin:0 auto 2.5rem; }
+    .tentang-grid { grid-template-columns:1fr; gap:2rem; }
+    .stats-grid { grid-template-columns:repeat(2,1fr); }
+    .tech-grid { grid-template-columns:repeat(2,1fr); }
+    .fitur-grid { grid-template-columns:1fr; }
+    .tim-grid { grid-template-columns:1fr; }
+    .pilar-grid { grid-template-columns:1fr; }
+    .grafik-wrapper { grid-template-columns:1fr; }
+    .hist-bars { height:160px; }
+    .hist-bar-wrap { height:150px; }
+    .detect-card { padding:1.75rem 1.25rem; }
+    .sc-banner { flex-direction:column; gap:1rem; }
+    .sc-badge { margin-left:0; }
+    .ecosystem-flow { flex-direction:column; }
+    .eco-arrow { transform:rotate(90deg); }
+  }
+  @media(max-width:480px){
+    .stats-grid { grid-template-columns:1fr 1fr; gap:1rem; }
+    .tech-grid { grid-template-columns:1fr 1fr; }
+  }
+  @media(min-width:769px) and (max-width:1024px){
+    .pilar-grid { grid-template-columns:repeat(2,1fr); }
+    .tim-grid { grid-template-columns:repeat(2,1fr); }
+  }
+
+/* ══ NOTIFICATION BELL ══ */
+.notif-wrap{position:relative;flex-shrink:0;z-index:600}
+.notif-btn{
+  position:relative;width:36px;height:36px;border-radius:10px;
+  border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.07);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .2s;color:rgba(255,255,255,.7);
+}
+.notif-btn:hover,.notif-btn.open{border-color:rgba(102,187,106,.5);background:rgba(102,187,106,.12);color:#fff}
+.notif-badge-dot{
+  position:absolute;top:-4px;right:-4px;
+  min-width:18px;height:18px;border-radius:9px;background:#ef5350;color:#fff;
+  font-size:.62rem;font-weight:700;display:flex;align-items:center;justify-content:center;
+  padding:0 4px;border:2px solid rgba(13,31,13,.97);animation:notifPop .3s cubic-bezier(.22,1,.36,1);
+}
+@keyframes notifPop{from{transform:scale(0)}to{transform:scale(1)}}
+.notif-panel{
+  position:absolute;top:calc(100% + 12px);right:0;width:330px;max-height:460px;
+  background:#fff;border-radius:18px;border:1px solid rgba(102,187,106,.15);
+  box-shadow:0 20px 50px rgba(0,0,0,.2),0 4px 12px rgba(0,0,0,.08);
+  display:flex;flex-direction:column;overflow:hidden;
+  opacity:0;pointer-events:none;transform:translateY(-8px) scale(.97);
+  transition:opacity .22s,transform .22s cubic-bezier(.22,1,.36,1);z-index:1500;
+}
+.notif-panel.open{display:flex;opacity:1;pointer-events:all;transform:translateY(0) scale(1)}
+.notif-ph{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem .65rem;border-bottom:1px solid rgba(102,187,106,.1);flex-shrink:0}
+.notif-ph-title{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:.9rem;color:#1a2e1a}
+.notif-ph-readall{font-size:.73rem;font-weight:600;color:#2e7d32;background:none;border:none;cursor:pointer;padding:.18rem .45rem;border-radius:6px;transition:background .2s}
+.notif-ph-readall:hover{background:#e8f5e9}
+.notif-scroll{overflow-y:auto;flex:1;max-height:340px}
+.notif-scroll::-webkit-scrollbar{width:4px}
+.notif-scroll::-webkit-scrollbar-thumb{background:rgba(102,187,106,.3);border-radius:2px}
+.nitem{display:flex;align-items:flex-start;gap:.7rem;padding:.8rem 1rem;border-bottom:1px solid #f7f7f7;cursor:pointer;transition:background .18s;position:relative}
+.nitem:hover{background:#fafffe}
+.nitem.unread{background:#f5fdf5}
+.nitem.unread::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:0 2px 2px 0;background:#66bb6a}
+.nitem-ico{width:34px;height:34px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.95rem}
+.nitem-ico.scan,.nitem-ico.new_scan{background:#e8f5e9;color:#2e7d32}
+.nitem-ico.chat{background:#e3f2fd;color:#1565c0}
+.nitem-ico.account{background:#fff8e1;color:#f57f17}
+.nitem-ico.low_conf{background:#fff3e0;color:#e65100}
+.nitem-body{flex:1;min-width:0}
+.nitem-title{font-size:.82rem;font-weight:700;color:#1a2e1a;line-height:1.3;margin-bottom:.18rem}
+.nitem-msg{font-size:.75rem;color:#4a6741;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nitem-time{font-size:.67rem;color:#b0c4b0;margin-top:.22rem}
+.nitem-del{opacity:.45;width:20px;height:20px;border-radius:5px;flex-shrink:0;background:none;border:1px solid rgba(244,67,54,.2);color:#ef9a9a;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s}
+.nitem:hover .nitem-del{opacity:1;background:rgba(244,67,54,.08)}
+.nitem-del:hover{background:rgba(244,67,54,.1);border-color:#ef5350;color:#c62828}
+.notif-empty-state{text-align:center;padding:2.5rem 1rem;color:#b0c4b0}
+.notif-empty-state svg{margin-bottom:.5rem;opacity:.3;display:block;margin-left:auto;margin-right:auto}
+.notif-empty-state p{font-size:.82rem}
+/* chat dot in dropdown */
+.npd-chat-dot{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:9px;background:#ef5350;color:#fff;font-size:.62rem;font-weight:700;padding:0 4px;margin-left:auto;animation:notifPop .3s cubic-bezier(.22,1,.36,1)}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav id="navbar">
+  <a href="#beranda" class="nav-logo">
+    <div class="leaf-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 19.34L5.71 21l1-1c1-1 2.25-2.51 3.8-3.6C13 14.82 17.41 14 21 10.4c0-1.11-.29-2.2-1-3.38z"/><path d="M3.82 19.34c.71.71 1.42 1.42 1.89 1.89"/></svg></div>
+    RiceScan<span style="color:var(--g-light)">AI</span>
+  </a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#beranda"   onclick="closeMenu()">Beranda</a></li>
+    <li><a href="#tentang"   onclick="closeMenu()">Tentang</a></li>
+    <li><a href="#smartcity" onclick="closeMenu()">Smart City</a></li>
+    <li><a href="#teknologi" onclick="closeMenu()">Teknologi</a></li>
+    <li><a href="#fitur"     onclick="closeMenu()">Fitur</a></li>
+    <li><a href="#deteksi"   onclick="closeMenu()">Deteksi</a></li>
+    <li><a href="#grafik"    onclick="closeMenu()">Grafik</a></li>
+    <li><a href="#tim"       onclick="closeMenu()">Tim</a></li>
+  </ul>
+  <div class="nav-user">
+      <!-- ══ NOTIFICATION BELL ══ -->
+      <div class="notif-wrap" id="userNotifWrap" style="margin-right:.5rem">
+        <button type="button" class="notif-btn" id="userNotifBtn" onclick="toggleUserNotif(event)" title="Notifikasi">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-badge-dot" id="userNotifBadge" style="display:none"></span>
+        </button>
+        <div class="notif-panel" id="userNotifPanel">
+          <div class="notif-ph">
+            <span class="notif-ph-title">Notifikasi</span>
+            <button type="button" class="notif-ph-readall" onclick="userNotifReadAll()">Tandai semua dibaca</button>
+          </div>
+          <div class="notif-scroll" id="userNotifList">
+            <div class="notif-empty-state">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <p>Belum ada notifikasi</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    <div class="nav-profile-trigger" id="navProfileTrigger" onclick="toggleProfileDropdown()">
+      <div class="nav-user-avatar">
+        {% if current_user.avatar_url() %}
+          <img src="{{ current_user.avatar_url() }}" alt="{{ current_user.nama }}">
+        {% else %}
+          👤
+        {% endif %}
+      </div>
+      <span class="nav-trigger-name">{{ current_user.nama.split()[0] }}</span>
+      <svg class="nav-trigger-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+
+    <!-- ── Dropdown Panel ── -->
+    <div class="nav-profile-dropdown" id="navProfileDropdown">
+      <div class="npd-header">
+        <div class="npd-header-name">{{ current_user.nama }}</div>
+        <div class="npd-header-role">{{ current_user.username }} · {{ 'Admin' if current_user.is_admin else 'Pengguna' }}</div>
+      </div>
+
+      {% if current_user.is_admin %}
+      <a href="{{ url_for('admin_dashboard') }}" class="npd-item admin-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Dashboard Admin
+      </a>
+      <a href="{{ url_for('index') }}" class="npd-item admin-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Halaman Deteksi
+      </a>
+      <div class="npd-sep"></div>
+      {% endif %}
+
+      {% if not current_user.is_admin %}
+      <a href="{{ url_for('index') }}" class="npd-item" style="color:#66bb6a">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <div class="npd-sep"></div>
+      {% endif %}
+
+      <a href="{{ url_for('riwayat') }}" class="npd-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Riwayat
+      </a>
+      <a href="{{ url_for('laporan_user') }}" class="npd-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Laporan
+      </a>
+      {% if not current_user.is_admin %}
+      <a href="{{ url_for('chat') }}" class="npd-item" id="navChatBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Chat
+        <span id="chatBadge" class="npd-chat-dot" style="display:none"></span>
+      </a>
+      {% endif %}
+      <a href="{{ url_for('profile') }}" class="npd-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Profil Saya
+      </a>
+
+      <div class="npd-sep"></div>
+      <button class="npd-item logout-item" id="navLogoutBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </button>
+    </div>
+  </div>
+  <div class="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></div>
+</nav>
+
+{# ── Flash messages ── #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="flash-container" id="flashContainer">
+  {% for cat, msg in messages %}
+  <div class="flash-msg flash-{{ cat }}">{{ msg }}</div>
+  {% endfor %}
+</div>
+<script>
+  setTimeout(() => {
+    const fc = document.getElementById('flashContainer');
+    if(fc) fc.style.display = 'none';
+  }, 4000);
+</script>
+{% endif %}
+{% endwith %}
+
+<!-- HERO -->
+<section id="beranda">
+  <div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
+  <div class="hero-container">
+    <div class="hero-left">
+      <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem">
+        <div class="hero-tag" style="margin-bottom:0">🌿 AI-Powered Agriculture</div>
+        <div class="hero-sc-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg> Smart City Initiative</div>
+      </div>
+      <h1 class="hero-title">Deteksi Penyakit <span>Daun Padi</span> Secara Otomatis</h1>
+      <p class="hero-sub">Solusi cerdas berbasis deep learning untuk mendukung <strong style="color:var(--g-light)">ketahanan pangan kota</strong> — bagian dari ekosistem Smart City menuju pertanian urban yang berkelanjutan.</p>
+      <div class="hero-btns">
+        <a href="#deteksi" class="btn-primary"> Mulai Deteksi</a>
+        <a href="#tentang" class="btn-secondary">Pelajari Lebih Lanjut →</a>
+      </div>
+    </div>
+    <div class="hero-right">
+      <a href="#deteksi" class="hero-scan-card" style="text-decoration:none;display:block;cursor:pointer" title="Mulai Deteksi Sekarang">
+        <!-- Header -->
+        <div class="hsc-header">
+          <div class="hsc-dot red"></div><div class="hsc-dot yellow"></div><div class="hsc-dot green"></div>
+          <span class="hsc-title">RiceScanAI · Deteksi Penyakit</span>
+        </div>
+
+        <!-- Scan Area -->
+        <div class="hsc-scan-area">
+          <div class="hsc-scan-frame">
+            <div class="hsc-corner tl"></div><div class="hsc-corner tr"></div>
+            <div class="hsc-corner bl"></div><div class="hsc-corner br"></div>
+            <div class="hsc-scan-line"></div>
+            <div class="hsc-scan-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(102,187,106,.5)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 19.34L5.71 21l1-1c1-1 2.25-2.51 3.8-3.6C13 14.82 17.41 14 21 10.4c0-1.11-.29-2.2-1-3.38z"/><path d="M3.82 19.34c.71.71 1.42 1.42 1.89 1.89"/></svg>
+            </div>
+            <div class="hsc-scan-hint">Klik untuk mulai deteksi</div>
+          </div>
+        </div>
+
+        <!-- Result Bar -->
+        <div class="hsc-result">
+          <div class="hsc-result-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Siap Mendeteksi
+          </div>
+          <div class="hsc-ready-badge">
+            <span class="hsc-ready-dot"></span>
+            Unggah &amp; Analisis
+          </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="hsc-stats">
+          <div class="hsc-stat">
+            <div class="hsc-stat-val">95%</div>
+            <div class="hsc-stat-lbl">Akurasi</div>
+          </div>
+          <div class="hsc-stat-div"></div>
+          <div class="hsc-stat">
+            <div class="hsc-stat-val">&lt;2s</div>
+            <div class="hsc-stat-lbl">Respons</div>
+          </div>
+          <div class="hsc-stat-div"></div>
+          <div class="hsc-stat">
+            <div class="hsc-stat-val">3</div>
+            <div class="hsc-stat-lbl">Penyakit</div>
+          </div>
+          <div class="hsc-stat-div"></div>
+          <div class="hsc-stat">
+            <div class="hsc-stat-val">AI</div>
+            <div class="hsc-stat-lbl">InceptionV3</div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- TENTANG -->
+<section id="tentang" class="section">
+  <div class="section-inner">
+    <div class="tentang-grid">
+      <div class="tentang-img-wrap reveal">
+        <div class="tentang-img-deco">
+          <svg viewBox="0 0 320 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Title -->
+            <text x="160" y="22" text-anchor="middle" fill="rgba(255,255,255,.9)" font-size="12" font-weight="bold" font-family="sans-serif">Convolutional Neural Network</text>
+            <text x="160" y="38" text-anchor="middle" fill="rgba(102,187,106,.75)" font-size="9" font-family="sans-serif">InceptionV3 Architecture</text>
+
+            <!-- Nodes: Input → Conv → Pool → Incep → FC → Output -->
+
+            <!-- INPUT (x=18, center-y=115) -->
+            <rect x="18" y="75" width="32" height="80" rx="7" fill="rgba(102,187,106,.2)" stroke="rgba(102,187,106,.65)" stroke-width="1.5"/>
+            <text x="34" y="170" text-anchor="middle" fill="rgba(255,255,255,.65)" font-size="9" font-family="sans-serif">Input</text>
+
+            <!-- arrow -->
+            <line x1="50" y1="115" x2="66" y2="115" stroke="rgba(102,187,106,.45)" stroke-width="1.5" stroke-dasharray="3,2"/>
+
+            <!-- CONV (x=66) -->
+            <rect x="66" y="83" width="26" height="64" rx="6" fill="rgba(46,125,50,.4)" stroke="rgba(102,187,106,.55)" stroke-width="1.5"/>
+            <text x="79" y="170" text-anchor="middle" fill="rgba(255,255,255,.65)" font-size="9" font-family="sans-serif">Conv</text>
+
+            <line x1="92" y1="115" x2="108" y2="115" stroke="rgba(102,187,106,.45)" stroke-width="1.5" stroke-dasharray="3,2"/>
+
+            <!-- POOL (x=108) -->
+            <rect x="108" y="91" width="22" height="48" rx="5" fill="rgba(27,94,32,.5)" stroke="rgba(102,187,106,.45)" stroke-width="1.5"/>
+            <text x="119" y="170" text-anchor="middle" fill="rgba(255,255,255,.65)" font-size="9" font-family="sans-serif">Pool</text>
+
+            <line x1="130" y1="115" x2="148" y2="115" stroke="rgba(102,187,106,.45)" stroke-width="1.5" stroke-dasharray="3,2"/>
+
+            <!-- INCEPTION (x=148) -->
+            <rect x="148" y="97" width="22" height="36" rx="5" fill="rgba(46,125,50,.45)" stroke="rgba(102,187,106,.5)" stroke-width="1.5"/>
+            <text x="159" y="170" text-anchor="middle" fill="rgba(255,255,255,.65)" font-size="9" font-family="sans-serif">Incep.</text>
+
+            <line x1="170" y1="115" x2="186" y2="115" stroke="rgba(102,187,106,.45)" stroke-width="1.5" stroke-dasharray="3,2"/>
+
+            <!-- FC (x=186) -->
+            <rect x="186" y="104" width="16" height="22" rx="4" fill="rgba(102,187,106,.5)" stroke="rgba(102,187,106,.7)" stroke-width="1.5"/>
+            <text x="194" y="170" text-anchor="middle" fill="rgba(255,255,255,.65)" font-size="9" font-family="sans-serif">FC</text>
+
+            <!-- Fan-out lines to outputs -->
+            <line x1="202" y1="111" x2="222" y2="90"  stroke="rgba(249,168,37,.5)" stroke-width="1.5"/>
+            <line x1="202" y1="115" x2="222" y2="115" stroke="rgba(249,168,37,.5)" stroke-width="1.5"/>
+            <line x1="202" y1="119" x2="222" y2="140" stroke="rgba(249,168,37,.5)" stroke-width="1.5"/>
+
+            <!-- OUTPUT: Blast -->
+            <circle cx="230" cy="90"  r="8" fill="rgba(244,67,54,.25)" stroke="rgba(244,67,54,.75)" stroke-width="1.5"/>
+            <text x="243" y="93"  fill="rgba(255,255,255,.85)" font-size="9" font-family="sans-serif">Blast</text>
+
+            <!-- OUTPUT: Blight -->
+            <circle cx="230" cy="115" r="8" fill="rgba(255,152,0,.25)" stroke="rgba(255,152,0,.75)" stroke-width="1.5"/>
+            <text x="243" y="118" fill="rgba(255,255,255,.85)" font-size="9" font-family="sans-serif">Blight</text>
+
+            <!-- OUTPUT: Tungro -->
+            <circle cx="230" cy="140" r="8" fill="rgba(33,150,243,.25)" stroke="rgba(33,150,243,.75)" stroke-width="1.5"/>
+            <text x="243" y="143" fill="rgba(255,255,255,.85)" font-size="9" font-family="sans-serif">Tungro</text>
+
+            <!-- Bottom labels row divider -->
+            <line x1="14" y1="158" x2="306" y2="158" stroke="rgba(255,255,255,.05)" stroke-width="1"/>
+          </svg>
+        </div>
+        <div class="img-badge"><strong>InceptionV3</strong>Deep Learning Model</div>
+      </div>
+      <div class="reveal" style="transition-delay:.15s">
+        <div class="section-label">Tentang Aplikasi</div>
+        <h2 class="section-title">Teknologi CNN untuk Diagnosa Tanaman Padi</h2>
+        <p style="color:var(--text-muted);line-height:1.75;margin-top:.75rem">
+          Menggunakan model Deep Learning berbasis <strong>Convolutional Neural Network (CNN)</strong> dengan arsitektur <strong>InceptionV3</strong> untuk mengidentifikasi penyakit pada daun padi secara otomatis dari foto digital — akurat, cepat, dan mudah diakses.
+        </p>
+        <ul class="disease-list">
+          <li><div class="disease-icon d1"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#ef5350;box-shadow:0 0 6px rgba(244,67,54,.5)"></span></div><div><strong>Blast (Blas)</strong><br><span>Penyakit jamur Magnaporthe oryzae yang menyerang daun, leher, dan malai padi.</span></div></li>
+          <li><div class="disease-icon d2"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#ffa726;box-shadow:0 0 6px rgba(255,152,0,.5)"></span></div><div><strong>Blight (Hawar Daun)</strong><br><span>Disebabkan bakteri Xanthomonas oryzae yang menyebabkan daun menguning dan mati.</span></div></li>
+          <li><div class="disease-icon d3"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#42a5f5;box-shadow:0 0 6px rgba(33,150,243,.5)"></span></div><div><strong>Tungro</strong><br><span>Penyakit virus yang ditularkan wereng hijau, menyebabkan pertumbuhan terhambat.</span></div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATISTIK -->
+<section id="statistik" class="section">
+  <div class="section-inner">
+    <div class="reveal" style="text-align:center;max-width:560px;margin:0 auto">
+      <div class="section-label">Statistik</div>
+      <h2 class="section-title">Performa Model yang Telah Teruji</h2>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card reveal"><div class="stat-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div><div class="stat-num"><span class="counter" data-target="95">0</span><span class="stat-suffix">%</span></div><div class="stat-label">Akurasi Model</div></div>
+      <div class="stat-card reveal" style="transition-delay:.1s"><div class="stat-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div><div class="stat-num"><span class="counter" data-target="240">0</span><span class="stat-suffix">+</span></div><div class="stat-label">Dataset Gambar</div></div>
+      <div class="stat-card reveal" style="transition-delay:.2s"><div class="stat-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div class="stat-num">&lt;<span class="stat-suffix">2s</span></div><div class="stat-label">Waktu Prediksi</div></div>
+      <div class="stat-card reveal" style="transition-delay:.3s"><div class="stat-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></div><div class="stat-num"><span class="counter" data-target="3">0</span></div><div class="stat-label">Kelas Penyakit</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- SMART CITY -->
+<section id="smartcity" class="section">
+  <svg class="city-skyline" viewBox="0 0 1440 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,120 L0,80 L40,80 L40,60 L60,60 L60,40 L80,40 L80,20 L100,20 L100,40 L120,40 L120,60 L140,60 L140,80 L180,80 L180,50 L200,50 L200,30 L210,30 L210,10 L220,10 L220,30 L230,30 L230,50 L260,50 L260,70 L280,70 L280,40 L300,40 L300,20 L315,20 L315,40 L330,40 L330,70 L380,70 L380,55 L400,55 L400,35 L420,35 L420,55 L450,55 L450,80 L500,80 L500,55 L520,55 L520,25 L535,25 L535,55 L560,55 L560,75 L600,75 L600,50 L620,50 L620,30 L640,30 L640,50 L660,50 L660,75 L700,75 L700,55 L730,55 L730,35 L750,35 L750,15 L760,15 L760,35 L770,35 L770,55 L800,55 L800,70 L840,70 L840,45 L860,45 L860,65 L900,65 L900,80 L940,80 L940,55 L960,55 L960,35 L975,35 L975,55 L990,55 L990,80 L1040,80 L1040,60 L1060,60 L1060,40 L1080,40 L1080,60 L1100,60 L1100,80 L1140,80 L1140,50 L1160,50 L1160,70 L1200,70 L1200,85 L1240,85 L1240,65 L1260,65 L1260,45 L1280,45 L1280,65 L1310,65 L1310,85 L1360,85 L1360,75 L1400,75 L1400,95 L1440,95 L1440,120 Z" fill="white"/>
+  </svg>
+  <div class="section-inner" style="position:relative;z-index:1">
+    <div class="reveal">
+      <div class="section-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg> Smart City</div>
+      <h2 class="section-title">Kontribusi pada Pilar Smart City</h2>
+      <p class="section-sub">RiceScanAI bukan sekadar aplikasi deteksi — ini komponen nyata dalam ekosistem <strong style="color:var(--g-light)">Smart City</strong> yang mendorong kota cerdas berbasis data dan teknologi.</p>
+    </div>
+    <div class="sc-banner reveal" style="transition-delay:.1s">
+      <div class="sc-banner-icon">🌆</div>
+      <div class="sc-banner-text">
+        <h3>RiceScanAI sebagai Solusi Smart City</h3>
+        <p>Dengan mengintegrasikan kecerdasan buatan ke dalam pertanian, aplikasi ini mendukung visi kota cerdas yang inklusif — menghubungkan petani, pemerintah daerah, dan ekosistem digital dalam satu platform berbasis data.</p>
+      </div>
+      <div class="sc-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg> Smart City Pillar</div>
+    </div>
+    <div class="pilar-grid">
+      <div class="pilar-card pilar-economy reveal"><div class="pilar-header"><div class="pilar-icon-wrap"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f9a825" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="pilar-num">01</div></div><div class="pilar-tag"><span class="pilar-dot"></span>Smart Economy</div><h3>Ekonomi Pertanian yang Cerdas</h3><p>Deteksi dini penyakit padi mengurangi kerugian hasil panen dan biaya penanganan. Petani dapat mengambil keputusan ekonomi lebih tepat berdasarkan data AI.</p><div class="pilar-connection"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 19.34L5.71 21l1-1c1-1 2.25-2.51 3.8-3.6C13 14.82 17.41 14 21 10.4c0-1.11-.29-2.2-1-3.38z"/></svg> <span>Kontribusi: <strong>Kurangi kerugian panen hingga 30%</strong></span></div></div>
+      <div class="pilar-card pilar-env reveal" style="transition-delay:.1s"><div class="pilar-header"><div class="pilar-icon-wrap"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 19.34L5.71 21l1-1c1-1 2.25-2.51 3.8-3.6C13 14.82 17.41 14 21 10.4c0-1.11-.29-2.2-1-3.38z"/><path d="M3.82 19.34c.71.71 1.42 1.42 1.89 1.89"/></svg></div><div class="pilar-num">02</div></div><div class="pilar-tag"><span class="pilar-dot"></span>Smart Environment</div><h3>Lingkungan & Pertanian Berkelanjutan</h3><p>Identifikasi penyakit tepat mencegah penggunaan pestisida berlebih. Mendukung pertanian presisi ramah lingkungan.</p><div class="pilar-connection"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg> <span>Kontribusi: <strong>Pertanian presisi berbasis AI</strong></span></div></div>
+      <div class="pilar-card pilar-gov reveal" style="transition-delay:.2s"><div class="pilar-header"><div class="pilar-icon-wrap"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2196f3" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></div><div class="pilar-num">03</div></div><div class="pilar-tag"><span class="pilar-dot"></span>Smart Governance</div><h3>Tata Kelola Berbasis Data</h3><p>Data deteksi membantu dinas pertanian memetakan wabah dan distribusikan bantuan subsidi lebih tepat sasaran di wilayah terdampak.</p><div class="pilar-connection"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> <span>Kontribusi: <strong>Dashboard pemetaan penyakit</strong></span></div></div>
+      <div class="pilar-card pilar-living reveal" style="transition-delay:.1s"><div class="pilar-header"><div class="pilar-icon-wrap"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e91e63" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><div class="pilar-num">04</div></div><div class="pilar-tag"><span class="pilar-dot"></span>Smart Living</div><h3>Kualitas Hidup & Ketahanan Pangan</h3><p>Menjaga produksi padi optimal berkontribusi pada stabilitas harga pangan dan ketersediaan beras sebagai kebutuhan pokok warga kota.</p><div class="pilar-connection"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg> <span>Kontribusi: <strong>Ketahanan pangan lokal</strong></span></div></div>
+      <div class="pilar-card pilar-mobility reveal" style="transition-delay:.2s"><div class="pilar-header"><div class="pilar-icon-wrap"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#9c27b0" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div><div class="pilar-num">05</div></div><div class="pilar-tag"><span class="pilar-dot"></span>Smart Mobility</div><h3>Akses Layanan dari Mana Saja</h3><p>Berbasis web dan dapat diakses dari smartphone. Petani di lahan terpencil bisa mengakses analisis AI hanya dengan foto dan koneksi internet.</p><div class="pilar-connection"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> <span>Kontribusi: <strong>Layanan digital tanpa batas lokasi</strong></span></div></div>
+      <div class="pilar-card pilar-people reveal" style="transition-delay:.3s"><div class="pilar-header"><div class="pilar-icon-wrap"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00bcd4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="pilar-num">06</div></div><div class="pilar-tag"><span class="pilar-dot"></span>Smart People</div><h3>SDM Pertanian yang Melek Teknologi</h3><p>Antarmuka sederhana mendorong adopsi AI di kalangan petani sebagai upaya peningkatan literasi digital masyarakat agraris.</p><div class="pilar-connection"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> <span>Kontribusi: <strong>Literasi digital petani</strong></span></div></div>
+    </div>
+    <div class="sc-ecosystem reveal" style="transition-delay:.2s">
+      <h3>Ekosistem Data RiceScanAI dalam Smart City</h3>
+      <p>Alur integrasi aplikasi ke dalam infrastruktur kota cerdas</p>
+      <div class="ecosystem-flow">
+        <div class="eco-step"><div class="eco-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div><div class="eco-label">Petani<br>Foto Daun</div></div>
+        <div class="eco-arrow">→</div>
+        <div class="eco-step"><div class="eco-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="eco-label">AI Model<br>InceptionV3</div></div>
+        <div class="eco-arrow">→</div>
+        <div class="eco-step"><div class="eco-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><div class="eco-label">Hasil<br>Diagnosa</div></div>
+        <div class="eco-arrow">→</div>
+        <div class="eco-step"><div class="eco-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></div><div class="eco-label">Data<br>Agregasi</div></div>
+        <div class="eco-arrow">→</div>
+        <div class="eco-step"><div class="eco-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></div><div class="eco-label">Dinas<br>Pertanian</div></div>
+        <div class="eco-arrow">→</div>
+        <div class="eco-step"><div class="eco-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg></div><div class="eco-label">Kebijakan<br>Smart City</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TEKNOLOGI -->
+<section id="teknologi" class="section">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-label">Tech Stack</div>
+      <h2 class="section-title">Teknologi yang Digunakan</h2>
+      <p class="section-sub">Dibangun dengan teknologi AI dan web terkini untuk performa optimal.</p>
+    </div>
+    <div class="tech-grid">
+      <div class="tech-card reveal"><div class="tech-icon" style="background:linear-gradient(135deg,rgba(255,112,67,.15),rgba(255,87,34,.2));border-color:rgba(255,112,67,.3)"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ff7043" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="18" r="2"/><circle cx="12" cy="12" r="2"/><line x1="7" y1="6" x2="10" y2="12"/><line x1="17" y1="6" x2="14" y2="12"/><line x1="7" y1="18" x2="10" y2="12"/><line x1="17" y1="18" x2="14" y2="12"/></svg></div><h3>TensorFlow</h3><p>Framework deep learning open-source untuk membangun dan melatih model neural network.</p></div>
+      <div class="tech-card reveal" style="transition-delay:.1s"><div class="tech-icon" style="background:linear-gradient(135deg,rgba(66,165,245,.15),rgba(30,136,229,.2));border-color:rgba(66,165,245,.3)"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#42a5f5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="4" rx="2"/><rect x="4" y="10" width="16" height="4" rx="2"/><rect x="6" y="17" width="12" height="4" rx="2"/></svg></div><h3>InceptionV3</h3><p>Arsitektur CNN canggih dari Google, optimal untuk klasifikasi gambar presisi tinggi.</p></div>
+      <div class="tech-card reveal" style="transition-delay:.2s"><div class="tech-icon" style="background:linear-gradient(135deg,rgba(102,187,106,.15),rgba(46,125,50,.2));border-color:rgba(102,187,106,.3)"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg></div><h3>Flask</h3><p>Web framework Python ringan sebagai backend API untuk menerima dan memproses gambar.</p></div>
+      <div class="tech-card reveal" style="transition-delay:.3s"><div class="tech-icon" style="background:linear-gradient(135deg,rgba(171,71,188,.15),rgba(142,36,170,.2));border-color:rgba(171,71,188,.3)"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ab47bc" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/><line x1="12" y1="2" x2="12" y2="22" opacity=".3"/></svg></div><h3>Python</h3><p>Bahasa pemrograman utama untuk pengembangan model ML dan logika backend aplikasi.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- FITUR -->
+<section id="fitur" class="section">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-label">Fitur Unggulan</div>
+      <h2 class="section-title">Semua yang Anda Butuhkan</h2>
+      <p class="section-sub">Platform lengkap untuk deteksi penyakit padi dengan antarmuka yang mudah digunakan.</p>
+    </div>
+    <div class="fitur-grid">
+      <div class="fitur-card reveal"><div class="fitur-num">01</div><div class="fitur-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div><h3>Upload Gambar</h3><p>Unggah foto daun padi dari perangkat apapun – smartphone, tablet, atau komputer.</p></div>
+      <div class="fitur-card reveal" style="transition-delay:.1s"><div class="fitur-num">02</div><div class="fitur-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><h3>Prediksi Real-time</h3><p>Hasil analisis penyakit tersedia dalam hitungan detik tanpa perlu menunggu lama.</p></div>
+      <div class="fitur-card reveal" style="transition-delay:.2s"><div class="fitur-num">03</div><div class="fitur-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></div><h3>Confidence Score</h3><p>Tampilkan tingkat keyakinan model terhadap prediksi untuk interpretasi transparan.</p></div>
+      <div class="fitur-card reveal" style="transition-delay:.15s"><div class="fitur-num">04</div><div class="fitur-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><h3>Tampilan Sederhana</h3><p>Antarmuka bersih dan intuitif yang dapat digunakan petani tanpa latar belakang teknologi.</p></div>
+      <div class="fitur-card reveal" style="transition-delay:.25s"><div class="fitur-num">05</div><div class="fitur-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div><h3>Berbasis Web</h3><p>Akses dari browser manapun tanpa instalasi – cukup buka, foto, dan dapatkan hasil.</p></div>
+      <div class="fitur-card reveal" style="transition-delay:.35s"><div class="fitur-num">06</div><div class="fitur-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><h3>Privasi Terjaga</h3><p>Gambar diproses di server dan tidak disimpan setelah prediksi selesai.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- DETEKSI -->
+<section id="deteksi" class="section">
+  <div class="section-inner" style="text-align:center">
+    <div class="reveal">
+      <div class="section-label">Coba Sekarang</div>
+      <h2 class="section-title">Deteksi Penyakit Daun Padi</h2>
+      <p class="section-sub" style="margin:0 auto">Upload foto daun padi Anda dan biarkan AI menganalisis kondisinya secara instan.</p>
+    </div>
+    <div class="detect-card reveal">
+      {% if error %}
+      <div class="error-box">{{ error }}</div>
+      {% endif %}
+      <form method="POST" enctype="multipart/form-data" id="detectForm">
+        {% if not preview_src %}
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" name="file" id="fileInput" accept="image/*" required onchange="handleFilePreview(event)">
+          <div class="upload-icon"><svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="rgba(102,187,106,.7)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 19.34L5.71 21l1-1c1-1 2.25-2.51 3.8-3.6C13 14.82 17.41 14 21 10.4c0-1.11-.29-2.2-1-3.38z"/><path d="M3.82 19.34c.71.71 1.42 1.42 1.89 1.89"/><path d="M12 2v4M8 4l4 2 4-2" stroke-opacity=".4"/></svg></div>
+          <p><strong style="color:white">Klik atau seret foto daun padi</strong></p>
+          <small>Format: JPG, PNG, WEBP – Maks. 5MB</small>
+        </div>
+        <div id="preview-wrap" style="display:none">
+          <img id="preview-img" src="" alt="Preview">
+          <p style="color:rgba(255,255,255,.5);font-size:.83rem;margin-top:.5rem">Preview gambar yang akan dianalisis</p>
+          <button type="button" onclick="resetForm()" class="btn-reset">↺ Ganti Gambar</button>
+        </div>
+        {% else %}
+        <div id="preview-wrap" style="display:block">
+          <img id="preview-img" src="{{ preview_src }}" alt="Preview">
+          <p style="color:rgba(255,255,255,.5);font-size:.83rem;margin-top:.5rem">Gambar yang telah dianalisis</p>
+          <button type="button" onclick="resetForm()" class="btn-reset">↺ Unggah Gambar Baru</button>
+        </div>
+        {% endif %}
+        <button type="submit" class="btn-detect" id="detectBtn">
+          <div class="spinner" id="spinner"></div>
+          <span id="btnText"> Deteksi Sekarang</span>
+        </button>
+      </form>
+      {% if result %}
+      <div id="result-area">
+        <div class="result-box {% if 'Dikenali' in result.label or 'Daun' in result.label %}result-warn{% endif %}">
+          <div class="result-label">Hasil Deteksi Penyakit</div>
+          <div class="result-disease">{{ result.emoji }} {{ result.label }}</div>
+          {% if result.confidence > 0 %}
+          <p class="result-desc">{{ result.desc }}</p>
+          <div class="result-saran"><strong>💡 Saran Penanganan</strong>{{ result.saran }}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="color:rgba(255,255,255,.5);font-size:.82rem">Confidence Score</span>
+            <span style="color:var(--g-light);font-weight:600;font-size:.9rem">{{ result.confidence }}%</span>
+          </div>
+          <div class="confidence-bar">
+            <div class="confidence-fill" id="conf-fill" style="width:0" data-width="{{ result.confidence }}%"></div>
+          </div>
+          <p style="color:rgba(255,255,255,.5);font-size:.82rem;margin-top:.4rem">
+            {% if result.confidence >= 85 %} Keyakinan Tinggi{% elif result.confidence >= 70 %} Keyakinan Sedang – coba foto lebih jelas{% else %}❌ Keyakinan Rendah – gunakan foto lebih jelas{% endif %}
+          </p>
+          {% else %}
+          <p class="result-desc">{{ result.desc }}</p>
+          <p class="result-saran"><strong>💡 Saran</strong> {{ result.saran }}</p>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- GRAFIK RIWAYAT SCAN -->
+<section id="grafik" class="section">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg> Riwayat Deteksi</div>
+      <h2 class="section-title">Statistik Hasil Scan Anda</h2>
+      <p class="section-sub">Visualisasi semua hasil deteksi penyakit padi yang pernah Anda lakukan — lihat pola dan distribusi penyakit secara historis.</p>
+    </div>
+
+    <div class="grafik-wrapper reveal" style="transition-delay:.15s">
+
+      <!-- Histogram -->
+      <div class="hist-card">
+        <div class="hist-header">
+          <div class="hist-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Histogram Hasil Deteksi</div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.6rem">
+            <div class="period-tabs" id="periodTabs">
+              <button class="period-tab active" data-period="7"  onclick="switchPeriod(this,7)">7H</button>
+              <button class="period-tab"        data-period="30" onclick="switchPeriod(this,30)">30H</button>
+              <button class="period-tab"        data-period="90" onclick="switchPeriod(this,90)">3Bln</button>
+            </div>
+            <div class="hist-legend">
+              <div class="hist-leg-item"><div class="hist-leg-dot" style="background:#ef5350"></div>Blast</div>
+              <div class="hist-leg-item"><div class="hist-leg-dot" style="background:#ffa726"></div>Blight</div>
+              <div class="hist-leg-item"><div class="hist-leg-dot" style="background:#42a5f5"></div>Tungro</div>
+              <div class="hist-leg-item"><div class="hist-leg-dot" style="background:#66bb6a"></div>Sehat</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hist-chart">
+          <!-- Y axis -->
+          <div class="hist-y-axis" id="histYAxis">
+            <div class="hist-y-tick">10</div>
+            <div class="hist-y-tick">8</div>
+            <div class="hist-y-tick">6</div>
+            <div class="hist-y-tick">4</div>
+            <div class="hist-y-tick">2</div>
+            <div class="hist-y-tick">0</div>
+          </div>
+
+          <div class="hist-plot-area">
+            <!-- Grid -->
+            <div class="hist-grid">
+              <div class="hist-grid-line"></div>
+              <div class="hist-grid-line"></div>
+              <div class="hist-grid-line"></div>
+              <div class="hist-grid-line"></div>
+              <div class="hist-grid-line"></div>
+              <div class="hist-grid-line"></div>
+            </div>
+
+            <!-- Bars -->
+            <div class="hist-bars" id="histBars">
+              <!-- Diisi JS berdasarkan data riwayat user -->
+            </div>
+
+            <!-- X axis -->
+            <div class="hist-x-axis" id="histXAxis"></div>
+          </div>
+        </div>
+
+        <!-- Summary bawah histogram -->
+        <div style="margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid rgba(102,187,106,.1);display:flex;gap:1.5rem;flex-wrap:wrap">
+          <div style="text-align:center;flex:1">
+            <div style="font-size:.7rem;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.2rem">Total Scan</div>
+            <div id="histTotalScan" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.5rem;font-weight:800;color:var(--white)">–</div>
+          </div>
+          <div style="text-align:center;flex:1">
+            <div style="font-size:.7rem;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.2rem">Paling Sering</div>
+            <div id="histMostCommon" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1rem;font-weight:700;color:var(--g-light)">–</div>
+          </div>
+          <div style="text-align:center;flex:1">
+            <div style="font-size:.7rem;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.2rem">Terakhir Scan</div>
+            <div id="histLastScan" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.88rem;font-weight:600;color:rgba(255,255,255,.6)">–</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right side: stat cards + donut -->
+      <div class="grafik-right">
+
+        <!-- Stat cards -->
+        <div id="statCards" style="display:flex;flex-direction:column;gap:.85rem">
+          <div class="scan-stat-card">
+            <div class="scan-stat-ico ico-total"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></div>
+            <div class="scan-stat-info">
+              <div class="scan-stat-label">Total Deteksi</div>
+              <div class="scan-stat-val" id="statTotal">–</div>
+              <div class="scan-stat-sub">semua waktu</div>
+              <div class="scan-stat-bar bar-total" id="barTotal" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="scan-stat-card">
+            <div class="scan-stat-ico ico-blast"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef5350" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></div>
+            <div class="scan-stat-info">
+              <div class="scan-stat-label">Blast</div>
+              <div class="scan-stat-val" id="statBlast">–</div>
+              <div class="scan-stat-sub" id="subBlast">dari total deteksi</div>
+              <div class="scan-stat-bar bar-blast" id="barBlast" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="scan-stat-card">
+            <div class="scan-stat-ico ico-blight"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffa726" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></div>
+            <div class="scan-stat-info">
+              <div class="scan-stat-label">Blight</div>
+              <div class="scan-stat-val" id="statBlight">–</div>
+              <div class="scan-stat-sub" id="subBlight">dari total deteksi</div>
+              <div class="scan-stat-bar bar-blight" id="barBlight" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="scan-stat-card">
+            <div class="scan-stat-ico ico-tungro"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#42a5f5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></div>
+            <div class="scan-stat-info">
+              <div class="scan-stat-label">Tungro</div>
+              <div class="scan-stat-val" id="statTungro">–</div>
+              <div class="scan-stat-sub" id="subTungro">dari total deteksi</div>
+              <div class="scan-stat-bar bar-tungro" id="barTungro" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Donut chart -->
+        <div class="donut-wrap reveal" style="transition-delay:.3s">
+          <div class="donut-title">Distribusi Penyakit</div>
+          <svg class="donut-svg" width="140" height="140" viewBox="0 0 140 140" id="donutSvg">
+            <!-- Diisi JS -->
+            <circle cx="70" cy="70" r="50" fill="none" stroke="rgba(102,187,106,.08)" stroke-width="22"/>
+            <text x="70" y="67" text-anchor="middle" class="donut-center-label" id="donutCenterVal">–</text>
+            <text x="70" y="82" text-anchor="middle" class="donut-center-sub" id="donutCenterSub">total scan</text>
+          </svg>
+          <div class="donut-legend" id="donutLegend">
+            <div class="donut-leg-item"><div class="donut-leg-dot" style="background:#ef5350"></div>Blast</div>
+            <div class="donut-leg-item"><div class="donut-leg-dot" style="background:#ffa726"></div>Blight</div>
+            <div class="donut-leg-item"><div class="donut-leg-dot" style="background:#42a5f5"></div>Tungro</div>
+            <div class="donut-leg-item"><div class="donut-leg-dot" style="background:#66bb6a"></div>Sehat</div>
+          </div>
+        </div>
+
+      </div><!-- /grafik-right -->
+    </div><!-- /grafik-wrapper -->
+
+    <!-- No data state (shown when no riwayat) -->
+    <div id="grafikEmpty" style="display:none;margin-top:2rem;text-align:center;padding:3rem;background:rgba(255,255,255,.03);border:1px solid rgba(102,187,106,.1);border-radius:20px;">
+      <div style="margin-bottom:.75rem;opacity:.35;display:flex;justify-content:center"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></div>
+      <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.1rem;font-weight:700;color:rgba(255,255,255,.6);margin-bottom:.5rem">Belum ada data scan</div>
+      <p style="color:rgba(255,255,255,.3);font-size:.88rem">Mulai deteksi daun padi untuk melihat statistik Anda di sini.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- TIM -->
+<section id="tim" class="section">
+  <div class="section-inner">
+    <div style="text-align:center;max-width:560px;margin:0 auto">
+      <div class="section-label">Tim Kami</div>
+      <h2 class="section-title">Tim Pengembang</h2>
+      <p class="section-sub">Dikembangkan oleh tim yang berdedikasi di bidang AI dan pengembangan web.</p>
+    </div>
+    <div class="tim-grid">
+      <div class="tim-card">
+        <div class="tim-avatar">
+          <img src="{{ url_for('static', filename='img/bahtiar.jpg') }}" alt="Bahtiar"
+               onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2.5rem;background:linear-gradient(135deg,#1b5e20,#2e7d32)\'>👨‍💻</div>'">
+        </div>
+        <h3>Bahtiar Rifai</h3>
+        <div class="tim-role">Project Lead &amp; Backend Developer</div>
+        <p class="tim-desc">Memimpin pengembangan proyek dan membangun arsitektur backend Flask serta integrasi model AI.</p>
+      </div>
+      <div class="tim-card">
+        <div class="tim-avatar">
+          <img src="{{ url_for('static', filename='img/darmawan.jpg') }}" alt="Darmawan"
+               onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2.5rem;background:linear-gradient(135deg,#2e7d32,#66bb6a)\'>👨‍💻</div>'">
+        </div>
+        <h3>Darmawan Almadani</h3>
+        <div class="tim-role">Machine Learning Engineer</div>
+        <p class="tim-desc">Bertanggung jawab atas pelatihan model InceptionV3 dan evaluasi performa klasifikasi penyakit.</p>
+      </div>
+      <div class="tim-card">
+        <div class="tim-avatar">
+          <img src="{{ url_for('static', filename='img/fanny.jpg') }}" alt="Fanny"
+               onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2.5rem;background:linear-gradient(135deg,#66bb6a,#a5d6a7)\'>👩‍💻</div>'">
+        </div>
+        <h3>Fanny Revalina Putri</h3>
+        <div class="tim-role">Frontend Developer</div>
+        <p class="tim-desc">Merancang antarmuka pengguna yang responsif dan mudah digunakan oleh petani di lapangan.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 19.34L5.71 21l1-1c1-1 2.25-2.51 3.8-3.6C13 14.82 17.41 14 21 10.4c0-1.11-.29-2.2-1-3.38z"/><path d="M3.82 19.34c.71.71 1.42 1.42 1.89 1.89"/></svg> Rice<span>Scan</span>AI</div>
+  <p>Sistem Deteksi Penyakit Daun Padi Berbasis Deep Learning</p>
+  <div class="footer-links">
+    <a href="#beranda">Beranda</a>
+    <a href="#tentang">Tentang</a>
+    <a href="#smartcity">Smart City</a>
+    <a href="#teknologi">Teknologi</a>
+    <a href="#deteksi">Deteksi</a>
+    <a href="https://github.com" target="_blank">GitHub ↗</a>
+  </div>
+  <p>© 2025 RiceScanAI. Hak Cipta Dilindungi.</p>
+  <div style="display:flex;align-items:center;justify-content:center;gap:.75rem;margin-top:1rem;flex-wrap:wrap">
+    <div class="footer-powered"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.5;vertical-align:middle;margin-right:.3rem"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Powered by AI Technology</div>
+    <div class="footer-powered" style="background:rgba(33,150,243,.1);border-color:rgba(33,150,243,.25);color:#90caf9"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg> Smart City Initiative</div>
+  </div>
+</footer>
+
+<script>
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => navbar.classList.toggle('solid', window.scrollY > 60));
+function toggleMenu(){ document.getElementById('navLinks').classList.toggle('open'); document.querySelector('.hamburger').classList.toggle('active'); }
+function closeMenu(){ document.getElementById('navLinks').classList.remove('open'); document.querySelector('.hamburger').classList.remove('active'); }
+document.addEventListener('click', e => { const nav = document.getElementById('navLinks'); if(nav.classList.contains('open') && !e.target.closest('#navbar')) closeMenu(); });
+const observer = new IntersectionObserver(entries => { entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); }); }, { threshold:0.1 });
+document.querySelectorAll('.reveal').forEach(r => observer.observe(r));
+const counterObs = new IntersectionObserver(entries => { entries.forEach(entry => { if(entry.isIntersecting){ const el = entry.target, target = +el.dataset.target; let current = 0; const step = target / 60; const timer = setInterval(() => { current = Math.min(current + step, target); el.textContent = Math.floor(current); if(current >= target) clearInterval(timer); }, 20); counterObs.unobserve(el); } }); }, { threshold:0.5 });
+document.querySelectorAll('.counter').forEach(c => counterObs.observe(c));
+function handleFilePreview(e){ const file = e.target.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = ev => { document.getElementById('preview-img').src = ev.target.result; document.getElementById('preview-wrap').style.display = 'block'; document.getElementById('uploadZone').style.display = 'none'; }; reader.readAsDataURL(file); }
+function resetForm(){ window.location.href = window.location.pathname; }
+const detectForm = document.getElementById('detectForm');
+if(detectForm){ detectForm.addEventListener('submit', function(){ setTimeout(function(){ document.getElementById('spinner').style.display = 'block'; document.getElementById('btnText').textContent = 'Menganalisis...'; document.getElementById('detectBtn').disabled = true; }, 0); }); }
+// Setelah page reload dari POST (ada result), trigger grafik refresh
+{% if result %}document.addEventListener('DOMContentLoaded', () => { document.dispatchEvent(new CustomEvent('ricescan:detected')); });{% endif %}
+const zone = document.getElementById('uploadZone');
+if(zone){ ['dragover','dragenter'].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.style.borderColor = 'var(--g-light)'; })); ['dragleave','drop'].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.style.borderColor = ''; })); zone.addEventListener('drop', e => { e.preventDefault(); const file = e.dataTransfer.files[0]; if(file && file.type.startsWith('image/')){ const dt = new DataTransfer(); dt.items.add(file); document.getElementById('fileInput').files = dt.files; handleFilePreview({ target: document.getElementById('fileInput') }); } }); }
+window.addEventListener('load', () => { const fill = document.getElementById('conf-fill'); if(fill && fill.dataset.width){ setTimeout(() => { fill.style.width = fill.dataset.width; }, 300); } else if(fill){ const w = fill.style.width; fill.style.width = '0'; setTimeout(() => { fill.style.width = w || '0'; }, 300); } });
+
+// ── GRAFIK RIWAYAT (realtime dari /api/riwayat-grafik) ──────
+(function () {
+  let currentDays = 7;
+  let isLoading   = false;
+
+  // ── Helpers ──
+  const id = s => document.getElementById(s);
+
+  function showLoading(on) {
+    const bars = id('histBars');
+    if (!bars) return;
+    if (on) {
+      bars.innerHTML = `
+        <div style="flex:1;display:flex;align-items:center;justify-content:center;
+                    height:100%;color:rgba(102,187,106,.4);font-size:.85rem;gap:.5rem">
+          <div style="width:18px;height:18px;border:2px solid rgba(102,187,106,.3);
+                      border-top-color:#66bb6a;border-radius:50%;
+                      animation:spinMe .8s linear infinite"></div>
+          Memuat data…
+        </div>`;
+    }
+  }
+
+  // ── Fetch dari API ──
+  async function fetchAndRender(days) {
+    if (isLoading) return;
+    isLoading = true;
+    showLoading(true);
+    try {
+      const res = await fetch('/api/riwayat-grafik?days=' + days, {
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+      });
+      const raw = await res.text();
+      let data;
+      try { data = JSON.parse(raw); }
+      catch (_) {
+        console.error('[Grafik] Bukan JSON (HTTP ' + res.status + '):', raw.substring(0, 300));
+        throw new Error('Server error HTTP ' + res.status);
+      }
+      if (!res.ok || !data.ok) {
+        console.error('[Grafik] API error:', data.error || ('HTTP ' + res.status));
+        throw new Error(data.error || 'HTTP ' + res.status);
+      }
+      renderAll(data);
+    } catch (e) {
+      console.error('[Grafik] Error:', e.message);
+      const bars = id('histBars');
+      if (bars) bars.innerHTML =
+        '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+        'height:100%;color:#ef9a9a;font-size:.82rem;gap:.4rem;padding:1rem">' +
+        '<span style="font-size:1.5rem">&#x26A0;&#xFE0F;</span>' +
+        '<span>Gagal memuat data</span>' +
+        '<span style="font-size:.7rem;opacity:.55;font-family:monospace">' + e.message + '</span></div>';
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  // ── Render semua komponen ──
+  function renderAll(data) {
+    // Empty state check
+    const wrapper = document.querySelector('.grafik-wrapper');
+    const empty   = id('grafikEmpty');
+    if (data.grand_total === 0) {
+      if (wrapper) wrapper.style.display = 'none';
+      if (empty)   empty.style.display   = 'block';
+      return;
+    }
+    if (wrapper) wrapper.style.display = '';
+    if (empty)   empty.style.display   = 'none';
+
+    renderHistogram(data);
+    renderStatCards(data);
+    renderDonut(data);
+    renderSummaryFooter(data);
+  }
+
+  // ── Histogram ──
+  function renderHistogram(data) {
+    const { buckets, max_bucket } = data;
+    const roundedMax = Math.max(2, Math.ceil(max_bucket / 2) * 2);
+
+    // Y axis
+    const yAxis = id('histYAxis');
+    if (yAxis) {
+      yAxis.innerHTML = '';
+      const steps = Math.min(5, roundedMax);
+      for (let i = steps; i >= 0; i--) {
+        const v = Math.round((i / steps) * roundedMax);
+        yAxis.innerHTML += `<div class="hist-y-tick">${v}</div>`;
+      }
+    }
+
+    // Bars
+    const barsEl = id('histBars');
+    if (!barsEl) return;
+    barsEl.innerHTML = '';
+    const chartH = 190;
+
+    const TYPES = [
+      { key: 'blast',  cls: 'hist-bar-blast',  lbl: 'Blast'  },
+      { key: 'blight', cls: 'hist-bar-blight', lbl: 'Blight' },
+      { key: 'tungro', cls: 'hist-bar-tungro', lbl: 'Tungro' },
+      { key: 'sehat',  cls: 'hist-bar-sehat',  lbl: 'Sehat'  },
+    ];
+
+    buckets.forEach(b => {
+      const group = document.createElement('div');
+      group.className = 'hist-group';
+      const wrap = document.createElement('div');
+      wrap.className  = 'hist-bar-wrap';
+      wrap.style.height = chartH + 'px';
+
+      TYPES.forEach(t => {
+        const bar   = document.createElement('div');
+        bar.className    = 'hist-bar ' + t.cls;
+        const val        = b[t.key] || 0;
+        const h          = val > 0 ? Math.max(4, Math.round((val / roundedMax) * chartH)) : 0;
+        bar.style.height = '0px';
+        bar.dataset.val  = `${t.lbl}: ${val}`;
+        bar.title        = `${t.lbl}: ${val} — ${b.label}`;
+        wrap.appendChild(bar);
+        requestAnimationFrame(() => {
+          bar.style.transition = 'height .65s cubic-bezier(.4,0,.2,1)';
+          bar.style.height     = h + 'px';
+        });
+      });
+
+      group.appendChild(wrap);
+      barsEl.appendChild(group);
+    });
+
+    // X axis labels
+    const xAxis = id('histXAxis');
+    if (xAxis) {
+      xAxis.innerHTML = '';
+      buckets.forEach(b => {
+        const el   = document.createElement('div');
+        el.className   = 'hist-x-label';
+        el.textContent = b.label;
+        xAxis.appendChild(el);
+      });
+    }
+  }
+
+  // ── Stat cards ──
+  function renderStatCards(data) {
+    const { totals, grand_total } = data;
+
+    if (id('statTotal')) id('statTotal').textContent = grand_total || '0';
+
+    ['blast', 'blight', 'tungro'].forEach(k => {
+      const cap = k[0].toUpperCase() + k.slice(1);
+      const val = totals[k] || 0;
+      const pct = grand_total ? Math.round((val / grand_total) * 100) : 0;
+
+      if (id('stat' + cap)) id('stat' + cap).textContent = val;
+      if (id('sub'  + cap)) id('sub'  + cap).textContent = pct + '% dari total';
+
+      const bar = id('bar' + cap);
+      if (bar) {
+        bar.style.width = '0%';
+        setTimeout(() => {
+          bar.style.transition = 'width .8s ease';
+          bar.style.width      = pct + '%';
+        }, 400);
+      }
+    });
+
+    const bt = id('barTotal');
+    if (bt) { bt.style.width='0%'; setTimeout(()=>{ bt.style.transition='width .8s ease'; bt.style.width='100%'; }, 400); }
+  }
+
+  // ── Donut chart ──
+  function renderDonut(data) {
+    const { totals, grand_total } = data;
+    const svg = id('donutSvg');
+    if (!svg) return;
+    svg.querySelectorAll('.donut-arc').forEach(e => e.remove());
+    const cv = id('donutCenterVal');
+    if (cv) cv.textContent = grand_total || '0';
+    if (!grand_total) return;
+
+    const COLORS = { blast:'#ef5350', blight:'#ffa726', tungro:'#42a5f5', sehat:'#66bb6a' };
+    const CX=70, CY=70, R=50, SW=22, C=2*Math.PI*R;
+    let offset = 0;
+
+    ['blast','blight','tungro','sehat'].forEach(k => {
+      if (!totals[k]) return;
+      const pct  = totals[k] / grand_total;
+      const dash = pct * C;
+      const arc  = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      arc.setAttribute('class','donut-arc');
+      arc.setAttribute('cx', CX); arc.setAttribute('cy', CY); arc.setAttribute('r', R);
+      arc.setAttribute('fill','none');
+      arc.setAttribute('stroke', COLORS[k]);
+      arc.setAttribute('stroke-width', SW);
+      arc.setAttribute('stroke-dasharray', `${dash} ${C - dash}`);
+      arc.setAttribute('stroke-dashoffset', C * 0.25 - offset * C);
+      arc.setAttribute('opacity','0.88');
+      svg.insertBefore(arc, svg.querySelector('text'));
+      offset += pct;
+    });
+  }
+
+  // ── Footer summary ──
+  function renderSummaryFooter(data) {
+    if (id('histTotalScan'))  id('histTotalScan').textContent  = data.grand_total || '–';
+    if (id('histLastScan'))   id('histLastScan').textContent   = data.last_scan   || '–';
+    if (id('histMostCommon')) id('histMostCommon').textContent = data.most_common  || '–';
+  }
+
+  // ── Period switcher ──
+  window.switchPeriod = function (btn, days) {
+    if (days === currentDays) return;
+    document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentDays = days;
+    fetchAndRender(days);
+  };
+
+  // ── Init: load saat section masuk viewport ──
+  const sec = document.getElementById('grafik');
+  if (sec) {
+    let loaded = false;
+    const obs = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && !loaded) {
+        loaded = true;
+        fetchAndRender(7);
+      }
+    }, { threshold: 0.1 });
+    obs.observe(sec);
+  }
+
+  // ── Refresh otomatis setelah deteksi baru (trigger event dari form submit) ──
+  document.addEventListener('ricescan:detected', () => {
+    if (sec && document.querySelector('.grafik-wrapper')) {
+      fetchAndRender(currentDays);
+    }
+  });
+})();
+// ────────────────────────────────────────────────────────────
+</script>
+{# Grafik riwayat: data diambil realtime via /api/riwayat-grafik — tidak perlu inject di sini #}
+
+<!-- ══ LOGOUT CONFIRMATION MODAL ══ -->
+<style>
+#logoutOverlay{
+  position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;
+  background:rgba(0,8,2,.6);
+  backdrop-filter:blur(20px) saturate(1.8);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .3s;
+}
+#logoutOverlay.show{opacity:1;pointer-events:all;}
+#logoutModal{
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.16);
+  backdrop-filter:blur(36px) saturate(2.2);
+  border-radius:26px;padding:2.25rem 2rem 1.75rem;
+  width:340px;max-width:90vw;
+  transform:translateY(24px) scale(.95);
+  transition:transform .32s cubic-bezier(.22,1,.36,1);
+  box-shadow:0 40px 80px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.07) inset;
+  text-align:center;
+}
+#logoutOverlay.show #logoutModal{transform:translateY(0) scale(1);}
+#logoutModal .lm-icon{
+  width:62px;height:62px;border-radius:50%;margin:0 auto 1.1rem;
+  background:rgba(239,83,80,.18);
+  border:1.5px solid rgba(239,83,80,.4);
+  backdrop-filter:blur(10px);
+  display:flex;align-items:center;justify-content:center;color:#ff8a80;
+  box-shadow:0 0 28px rgba(239,83,80,.25);
+}
+#logoutModal h3{
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:1.1rem;font-weight:800;
+  color:#fff;margin-bottom:.4rem;
+  text-shadow:0 1px 8px rgba(0,0,0,.4);
+}
+#logoutModal p{
+  font-size:.86rem;color:rgba(255,255,255,.6);
+  line-height:1.65;margin-bottom:1.6rem;
+}
+#logoutModal .lm-actions{display:flex;gap:.75rem;}
+#logoutModal .lm-cancel{
+  flex:1;padding:.72rem;border-radius:12px;
+  font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;
+  cursor:pointer;
+  background:rgba(255,255,255,.1);
+  border:1.5px solid rgba(255,255,255,.2);
+  color:rgba(255,255,255,.85);transition:all .22s;
+  backdrop-filter:blur(8px);
+}
+#logoutModal .lm-cancel:hover{
+  background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.35);
+}
+#logoutModal .lm-confirm{
+  flex:1;padding:.72rem;border-radius:12px;
+  font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:700;
+  cursor:pointer;
+  background:linear-gradient(135deg,#ef5350,#c62828);
+  border:none;color:#fff;transition:all .22s;
+  box-shadow:0 4px 18px rgba(198,40,40,.45);
+  text-decoration:none;display:flex;align-items:center;justify-content:center;gap:.4rem;
+}
+#logoutModal .lm-confirm:hover{
+  transform:translateY(-2px);box-shadow:0 8px 26px rgba(198,40,40,.6);
+}
+#logoutModal .lm-confirm:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(198,40,40,.55);}
+</style>
+
+<div id="logoutOverlay">
+  <div id="logoutModal">
+    <div class="lm-icon">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </div>
+    <h3>Konfirmasi Logout</h3>
+    <p>Apakah Anda yakin ingin keluar dari sesi ini?</p>
+    <div class="lm-actions">
+      <button class="lm-cancel" id="logoutCancel">Batal</button>
+      <a href="{{ url_for('logout') }}" class="lm-confirm">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Ya, Logout
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const overlay   = document.getElementById('logoutOverlay');
+  const cancelBtn = document.getElementById('logoutCancel');
+  const trigger   = document.getElementById('navLogoutBtn');
+
+  if(trigger){
+    trigger.addEventListener('click', function(e){
+      e.preventDefault();
+      overlay.classList.add('show');
+    });
+  }
+  cancelBtn.addEventListener('click', () => overlay.classList.remove('show'));
+  overlay.addEventListener('click', e => { if(e.target===overlay) overlay.classList.remove('show'); });
+  document.addEventListener('keydown', e => { if(e.key==='Escape') overlay.classList.remove('show'); });
+})();
+</script>
+<script>
+// ── Profile Dropdown ──
+function toggleProfileDropdown(){
+  const trigger = document.getElementById('navProfileTrigger');
+  const dropdown = document.getElementById('navProfileDropdown');
+  trigger.classList.toggle('open');
+  dropdown.classList.toggle('open');
+}
+document.addEventListener('click', function(e){
+  const trigger = document.getElementById('navProfileTrigger');
+  const dropdown = document.getElementById('navProfileDropdown');
+  if(trigger && dropdown && !trigger.contains(e.target) && !dropdown.contains(e.target)){
+    trigger.classList.remove('open');
+    dropdown.classList.remove('open');
+  }
+});
+
+
+</script>
+<script>
+// ══ NOTIFICATION SYSTEM (USER) ══
+(function(){
+  var ICONS = {
+    scan:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+    chat:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+    account: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>',
+    low_conf:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    system:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+    new_scan:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+    new_user:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  };
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+  window.toggleUserNotif = function(e){
+    if(e){ e.stopPropagation(); }
+    var pan = document.getElementById('userNotifPanel');
+    var btn = document.getElementById('userNotifBtn');
+    if(!pan || !btn) return;
+    if(pan.classList.contains('open')){ closeUserNotif(); return; }
+    btn.classList.add('open');
+    pan.classList.add('open');
+    fetchUserNotifs();
+    var pd = document.getElementById('navProfileDropdown');
+    var pt = document.getElementById('navProfileTrigger');
+    if(pd) pd.classList.remove('open');
+    if(pt) pt.classList.remove('open');
+  };
+
+  function closeUserNotif(){
+    var pan = document.getElementById('userNotifPanel');
+    var btn = document.getElementById('userNotifBtn');
+    if(pan) pan.classList.remove('open');
+    if(btn) btn.classList.remove('open');
+  }
+
+  document.addEventListener('click', function(e){
+    var wrap = document.getElementById('userNotifWrap');
+    if(wrap && !wrap.contains(e.target)) closeUserNotif();
+  });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeUserNotif(); });
+
+  function render(data){
+    var badge = document.getElementById('userNotifBadge');
+    var list  = document.getElementById('userNotifList');
+    if(!badge || !list) return;
+    if(data.unread > 0){
+      badge.textContent = data.unread > 9 ? '9+' : data.unread;
+      badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
+    }
+    var chatBadge2 = document.getElementById('chatBadge');
+    if(!data.items || data.items.length === 0){
+      list.innerHTML = '<div class="notif-empty-state"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><p>Belum ada notifikasi</p></div>';
+      return;
+    }
+    list.innerHTML = data.items.map(function(n){
+      var ico = ICONS[n.type] || ICONS.system;
+      return '<div class="nitem ' + (n.is_read ? '' : 'unread') + '" data-notif-id="' + n.id + '" data-notif-link="' + encodeURIComponent(n.link || '/') + '">'
+        + '<div class="nitem-ico ' + esc(n.type) + '">' + ico + '</div>'
+        + '<div class="nitem-body">'
+        +   '<div class="nitem-title">' + esc(n.title) + '</div>'
+        +   '<div class="nitem-msg">'   + esc(n.message) + '</div>'
+        +   '<div class="nitem-time">'  + esc(n.time_ago) + '</div>'
+        + '</div>'
+        + '<button type="button" class="nitem-del" data-del-id="' + n.id + '" title="Hapus notifikasi">'
+        +   '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+        + '</button>'
+        + '</div>';
+    }).join('');
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    var list = document.getElementById('userNotifList');
+    if(!list) return;
+    list.addEventListener('click', function(e){
+      var delBtn = e.target.closest('.nitem-del');
+      if(delBtn){
+        e.stopPropagation();
+        var id = delBtn.getAttribute('data-del-id');
+        fetch('/api/notifications/' + id + '/delete', {method:'POST', credentials:'same-origin'})
+          .then(function(){ fetchUserNotifs(); }).catch(function(){});
+        return;
+      }
+      var item = e.target.closest('.nitem');
+      if(item){
+        var id   = item.getAttribute('data-notif-id');
+        var link = decodeURIComponent(item.getAttribute('data-notif-link') || '/');
+        if(id) fetch('/api/notifications/' + id + '/read', {method:'POST', credentials:'same-origin'}).catch(function(){});
+        closeUserNotif();
+        if(link && link !== '#') window.location.href = link;
+      }
+    });
+  });
+
+  function fetchUserNotifs(){
+    fetch('/api/notifications', {credentials:'same-origin'})
+      .then(function(r){ if(!r.ok) throw new Error(); return r.json(); })
+      .then(function(d){ if(d) render(d); }).catch(function(){});
+  }
+
+  window.userNotifReadAll = function(){
+    fetch('/api/notifications/read-all', {method:'POST', credentials:'same-origin'})
+      .then(function(){ fetchUserNotifs(); }).catch(function(){});
+  };
+
+  function updateChatBadge(){
+    fetch('/chat/unread-count', {credentials:'same-origin'})
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        var count = d.count || 0;
+        var b = document.getElementById('chatBadge');
+        if(!b) return;
+        b.textContent   = count > 9 ? '9+' : count;
+        b.style.display = count > 0 ? 'inline-flex' : 'none';
+      }).catch(function(){});
+  }
+
+  var _origToggle = window.toggleProfileDropdown;
+  window.toggleProfileDropdown = function(){
+    closeUserNotif();
+    if(typeof _origToggle === 'function') _origToggle();
+  };
+
+  fetchUserNotifs();
+  updateChatBadge();
+  setInterval(fetchUserNotifs, 12000);
+  setInterval(updateChatBadge, 5000);
+})();
+</script>
+</body>
+</html>

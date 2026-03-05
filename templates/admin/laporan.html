@@ -1,0 +1,207 @@
+{% extends 'admin/base.html' %}
+{% block title %}Laporan Admin{% endblock %}
+{% block topbar_title %}Laporan{% endblock %}
+
+{% block topbar_actions %}
+<button onclick="window.print()" class="btn btn-primary btn-sm">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+  Cetak Laporan
+</button>
+{% endblock %}
+
+{% block head %}
+<style>
+.lap-meta{font-size:.82rem;color:var(--mu);margin-bottom:2rem;display:flex;align-items:center;gap:.4rem}
+.section-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:1rem;font-weight:800;
+               color:var(--tx);margin:2rem 0 1rem;display:flex;align-items:center;gap:.5rem;
+               padding-bottom:.6rem;border-bottom:2px solid rgba(102,187,106,.15)}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem}
+.kpi{background:#fff;border-radius:14px;padding:1.1rem 1.25rem;border:1px solid rgba(102,187,106,.12);
+     box-shadow:0 2px 8px rgba(0,0,0,.04);position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gm),var(--gl))}
+.kpi.blue::before{background:linear-gradient(90deg,#1565c0,#42a5f5)}
+.kpi.red::before{background:linear-gradient(90deg,#c62828,#ef5350)}
+.kpi.orange::before{background:linear-gradient(90deg,#e65100,#ffa726)}
+.kpi.purple::before{background:linear-gradient(90deg,#6a1b9a,#ab47bc)}
+.kpi-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.9rem;font-weight:800;color:var(--tx);line-height:1}
+.kpi-lbl{font-size:.75rem;color:var(--mu);margin-top:.3rem}
+
+/* print */
+@media print{
+  .sidebar,.topbar,.logout-overlay{display:none!important}
+  .layout{margin-left:0!important}
+  .content{padding:.5rem 1rem!important}
+  .print-hide{display:none!important}
+  .card{border:1px solid #ddd!important;box-shadow:none!important;break-inside:avoid}
+  .kpi{border:1px solid #ddd!important;box-shadow:none!important}
+  body{background:#fff!important}
+  table{font-size:.78rem}
+  .print-header{display:block!important}
+}
+.print-header{display:none;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:2px solid #1b5e20}
+.print-header h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.4rem;font-weight:800;color:#1b5e20}
+.print-header p{font-size:.82rem;color:#666;margin-top:.25rem}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Print-only header -->
+<div class="print-header">
+  <h1>Laporan RiceScanAI</h1>
+  <p>Dicetak pada {{ now.strftime('%d %B %Y, %H:%M') }} WIB &nbsp;·&nbsp; Administrator: {{ current_user.nama }}</p>
+</div>
+
+<div class="lap-meta">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+  Data realtime per {{ now.strftime('%d %B %Y, %H:%M') }} WIB
+</div>
+
+<!-- KPI Summary -->
+<div class="kpi-grid">
+  <div class="kpi">
+    <div class="kpi-val">{{ total_users }}</div>
+    <div class="kpi-lbl">Total User</div>
+  </div>
+  <div class="kpi blue">
+    <div class="kpi-val">{{ user_aktif }}</div>
+    <div class="kpi-lbl">User Aktif</div>
+  </div>
+  <div class="kpi red">
+    <div class="kpi-val">{{ user_nonaktif }}</div>
+    <div class="kpi-lbl">User Nonaktif</div>
+  </div>
+  <div class="kpi orange">
+    <div class="kpi-val">{{ total_deteksi }}</div>
+    <div class="kpi-lbl">Total Deteksi</div>
+  </div>
+  <div class="kpi purple">
+    <div class="kpi-val">{{ total_admins }}</div>
+    <div class="kpi-lbl">Total Admin</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-val">{{ avg_conf or '-' }}{% if avg_conf %}<span style="font-size:1rem">%</span>{% endif %}</div>
+    <div class="kpi-lbl">Rata-rata Confidence</div>
+  </div>
+</div>
+
+<!-- Statistik Penyakit -->
+<div class="section-title">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+  Statistik Penyakit
+</div>
+<div class="card" style="margin-bottom:1.5rem">
+  {% if stats_dict %}
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Jenis Penyakit</th><th>Jumlah Deteksi</th><th>Persentase</th><th>Proporsi</th></tr></thead>
+      <tbody>
+        {% for label, count in stats_dict.items() %}
+        {% set pct = ((count / total_deteksi) * 100) | round(1) if total_deteksi > 0 else 0 %}
+        <tr>
+          <td>
+            <span style="display:inline-flex;align-items:center;gap:.45rem;font-weight:600">
+              {% if 'blast' in label|lower %}<span class="dot-blast"></span>
+              {% elif 'blight' in label|lower %}<span class="dot-blight"></span>
+              {% elif 'tungro' in label|lower %}<span class="dot-tungro"></span>
+              {% else %}<span class="dot-unknown"></span>{% endif %}
+              {{ label }}
+            </span>
+          </td>
+          <td style="font-weight:700;color:var(--gm)">{{ count }}</td>
+          <td>{{ pct }}%</td>
+          <td style="min-width:120px">
+            <div style="height:8px;background:#e8f5e9;border-radius:4px;overflow:hidden">
+              <div style="height:100%;width:{{ pct }}%;background:linear-gradient(90deg,var(--gm),var(--gl));border-radius:4px"></div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:1.5rem;color:var(--mu)">Belum ada data deteksi</div>
+  {% endif %}
+</div>
+
+<!-- Daftar User -->
+<div class="section-title">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+  Daftar Seluruh User
+</div>
+<div class="card" style="margin-bottom:1.5rem">
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Nama</th><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>Deteksi</th><th>Bergabung</th></tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td style="color:var(--mu);font-size:.8rem">{{ loop.index }}</td>
+          <td style="font-weight:600">{{ u.nama }}</td>
+          <td style="color:var(--mu)">@{{ u.username }}</td>
+          <td style="font-size:.82rem;color:var(--mu)">{{ u.email }}</td>
+          <td>
+            <span class="badge {% if u.role == 'admin' %}badge-gold{% else %}badge-green{% endif %}">{{ u.role|capitalize }}</span>
+          </td>
+          <td>
+            <span class="badge {% if u.is_active %}badge-green{% else %}badge-red{% endif %}">
+              {% if u.is_active %}Aktif{% else %}Nonaktif{% endif %}
+            </span>
+          </td>
+          <td style="font-weight:700;color:var(--gm);text-align:center">{{ user_det.get(u.id, 0) }}</td>
+          <td style="font-size:.8rem;color:var(--mu)">{{ u.created_at.strftime('%d %b %Y') }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--mu)">Belum ada user</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 50 Deteksi Terbaru -->
+<div class="section-title">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+  50 Deteksi Terbaru
+</div>
+<div class="card">
+  {% if recent_det %}
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>User</th><th>Hasil Deteksi</th><th>Confidence</th><th>Waktu</th></tr>
+      </thead>
+      <tbody>
+        {% for d in recent_det %}
+        {% set lbl = d.hasil|lower %}
+        <tr>
+          <td style="color:var(--mu);font-size:.8rem">{{ loop.index }}</td>
+          <td>
+            <div style="font-weight:600;font-size:.87rem">{{ d.user.nama }}</div>
+            <div style="font-size:.75rem;color:var(--mu)">@{{ d.user.username }}</div>
+          </td>
+          <td>
+            <span class="badge {% if 'blast' in lbl %}badge-red{% elif 'blight' in lbl %}badge-orange{% elif 'tungro' in lbl %}badge-blue{% else %}badge-gray{% endif %}" style="display:inline-flex;align-items:center;gap:.35rem">
+              {% if 'blast' in lbl %}<span class="dot-blast"></span>
+              {% elif 'blight' in lbl %}<span class="dot-blight"></span>
+              {% elif 'tungro' in lbl %}<span class="dot-tungro"></span>
+              {% else %}<span class="dot-unknown"></span>{% endif %}
+              {{ d.hasil }}
+            </span>
+          </td>
+          <td style="font-weight:700;color:var(--gm)">{{ d.confidence }}%</td>
+          <td style="color:var(--mu);font-size:.82rem;white-space:nowrap">{{ d.created_at.strftime('%d %b %Y, %H:%M') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:2rem;color:var(--mu)">Belum ada data deteksi</div>
+  {% endif %}
+</div>
+
+{% endblock %}

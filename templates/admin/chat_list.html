@@ -1,0 +1,98 @@
+{% extends 'admin/base.html' %}
+{% block title %}Chat Admin{% endblock %}
+{% block topbar_title %}Chat Pengguna{% endblock %}
+
+{% block content %}
+<style>
+.chat-list-wrap{max-width:680px}
+.chat-list-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.3rem;font-weight:800;color:var(--tx);margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem}
+.chat-user-card{background:#fff;border:1px solid rgba(102,187,106,.15);border-radius:14px;padding:1rem 1.25rem;
+                display:flex;align-items:center;gap:1rem;text-decoration:none;color:var(--tx);
+                transition:all .25s;margin-bottom:.75rem;position:relative}
+.chat-user-card:hover{border-color:var(--gl);box-shadow:0 4px 20px rgba(46,125,50,.1);transform:translateY(-2px)}
+.chat-user-avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#66bb6a,#2e7d32);
+                  display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;overflow:hidden;border:2px solid rgba(102,187,106,.25)}
+.chat-user-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+.chat-user-name{font-weight:700;font-size:.95rem;color:var(--tx)}
+.chat-user-preview{font-size:.8rem;color:#aac5aa;margin-top:.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px}
+.chat-meta{margin-left:auto;text-align:right;flex-shrink:0}
+.chat-time{font-size:.72rem;color:#aac5aa}
+.chat-unread-badge{display:inline-flex;align-items:center;justify-content:center;
+                   background:#ef5350;color:#fff;font-size:.7rem;font-weight:700;
+                   width:20px;height:20px;border-radius:50%;margin-top:.3rem;margin-left:auto}
+.chat-empty{text-align:center;padding:4rem 2rem;color:#aac5aa}
+.chat-empty svg{opacity:.25;margin-bottom:1rem}
+.chat-del-btn{
+  margin-left:.5rem;width:30px;height:30px;border-radius:8px;flex-shrink:0;
+  background:rgba(239,83,80,.08);border:1px solid rgba(239,83,80,.2);
+  color:#c62828;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .2s;opacity:0;
+}
+.chat-user-card:hover .chat-del-btn{opacity:1}
+.chat-del-btn:hover{background:rgba(239,83,80,.2);border-color:#ef5350}
+</style>
+
+<div class="chat-list-wrap">
+  <div class="chat-list-title">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    Chat Masuk
+  </div>
+
+  {% if users_with_chat %}
+    {% for item in users_with_chat %}
+    <a href="{{ url_for('admin_chat_detail', user_id=item.user.id) }}" class="chat-user-card">
+      <div class="chat-user-avatar">
+        {% if item.user.avatar_url() %}
+          <img src="{{ item.user.avatar_url() }}" alt="{{ item.user.nama }}">
+        {% else %}
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        {% endif %}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div class="chat-user-name">{{ item.user.nama }} <span style="font-weight:400;color:#aac5aa;font-size:.8rem">@{{ item.user.username }}</span></div>
+        <div class="chat-user-preview">
+          {% if item.last_msg %}
+            {{ '← ' if item.last_msg.sender == 'admin' else '' }}{{ item.last_msg.message[:60] }}{{ '...' if item.last_msg.message|length > 60 else '' }}
+          {% endif %}
+        </div>
+      </div>
+      <div class="chat-meta">
+        <div class="chat-time">{{ item.last_msg.created_at.strftime('%d %b %H:%M') if item.last_msg else '' }}</div>
+        {% if item.unread > 0 %}
+        <div style="display:flex;justify-content:flex-end;margin-top:.3rem">
+          <span class="chat-unread-badge">{{ item.unread }}</span>
+        </div>
+        {% endif %}
+      </div>
+      <button class="chat-del-btn" onclick="deleteConv(event, {{ item.user.id }}, this)" title="Hapus percakapan">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+      </button>
+    </a>
+    {% endfor %}
+  {% else %}
+    <div class="chat-empty">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <p style="font-weight:600;font-size:.95rem;margin-bottom:.3rem">Belum ada pesan masuk</p>
+      <p style="font-size:.82rem">Pesan dari pengguna akan muncul di sini</p>
+    </div>
+  {% endif %}
+
+<script>
+async function deleteConv(e, userId, btn){
+  e.preventDefault(); e.stopPropagation();
+  if(!confirm('Hapus semua pesan percakapan dengan user ini?')) return;
+  const fd = new FormData();
+  try{
+    const res = await fetch(`/admin/chat/${userId}/delete-all`, {method:'POST', body:fd});
+    const data = await res.json();
+    if(data.ok){
+      const card = btn.closest('a');
+      card.style.opacity = '0'; card.style.transform = 'translateX(20px)';
+      card.style.transition = 'all .28s';
+      setTimeout(()=>card.remove(), 290);
+    }
+  } catch(e){ console.error(e); }
+}
+</script>
+</div>
+{% endblock %}

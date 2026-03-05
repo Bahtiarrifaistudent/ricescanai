@@ -1,0 +1,377 @@
+<!--
+  ══════════════════════════════════════════════════════
+  NOTIFIKASI USER — SNIPPET (FIXED)
+  Tambahkan di semua file HTML user (riwayat, chat, profile, laporan_user, index)
+
+  CARA PAKAI:
+  1. Tambahkan CSS (bagian NOTIF CSS) ke dalam <style> yang sudah ada
+  2. Tambahkan HTML (bagian NOTIF HTML) di dalam navbar, SEBELUM div nav-profile-trigger
+  3. Tambahkan JS (bagian NOTIF JS) sebelum </body>
+  ══════════════════════════════════════════════════════
+-->
+
+
+<!-- ══ NOTIF CSS — masukkan ke dalam <style> yang sudah ada ══ -->
+<style id="NOTIF_CSS_COPY_INTO_STYLE">
+/* Notification Bell - User */
+.notif-wrap{position:relative}
+.notif-btn{
+  position:relative;width:36px;height:36px;border-radius:10px;
+  border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.07);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .2s;color:rgba(255,255,255,.7);
+  flex-shrink:0;
+}
+.notif-btn:hover,.notif-btn.open{
+  border-color:rgba(102,187,106,.5);background:rgba(102,187,106,.12);color:#fff;
+}
+.notif-badge{
+  position:absolute;top:-4px;right:-4px;
+  min-width:18px;height:18px;border-radius:9px;
+  background:#ef5350;color:#fff;
+  font-size:.62rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 4px;border:2px solid rgba(13,31,13,.97);
+  animation:notifPop .3s cubic-bezier(.22,1,.36,1);
+}
+@keyframes notifPop{from{transform:scale(0)}to{transform:scale(1)}}
+.notif-dropdown{
+  position:absolute;top:calc(100% + 12px);right:0;
+  width:330px;max-height:460px;
+  background:#fff;border-radius:18px;
+  border:1px solid rgba(102,187,106,.15);
+  box-shadow:0 20px 50px rgba(0,0,0,.2),0 4px 12px rgba(0,0,0,.08);
+  display:flex;flex-direction:column;overflow:hidden;
+  opacity:0;pointer-events:none;
+  transform:translateY(-8px) scale(.97);
+  transition:opacity .22s,transform .22s cubic-bezier(.22,1,.36,1);
+  z-index:1500;
+}
+.notif-dropdown.open{opacity:1;pointer-events:all;transform:translateY(0) scale(1)}
+.notif-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.9rem 1.1rem .7rem;
+  border-bottom:1px solid rgba(102,187,106,.1);flex-shrink:0;
+}
+.notif-header-title{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:.92rem;color:#1a2e1a}
+.notif-read-all{font-size:.74rem;font-weight:600;color:#2e7d32;background:none;border:none;cursor:pointer;padding:.2rem .5rem;border-radius:6px;transition:background .2s}
+.notif-read-all:hover{background:#e8f5e9}
+.notif-list{overflow-y:auto;flex:1;max-height:340px}
+.notif-list::-webkit-scrollbar{width:4px}
+.notif-list::-webkit-scrollbar-thumb{background:rgba(102,187,106,.3);border-radius:2px}
+.notif-item{
+  display:flex;align-items:flex-start;gap:.75rem;
+  padding:.85rem 1.1rem;border-bottom:1px solid #f7f7f7;
+  cursor:pointer;transition:background .18s;position:relative;
+  /* FIX: jangan pakai onclick inline — pakai data-* + event delegation */
+}
+.notif-item:hover{background:#fafffe}
+.notif-item.unread{background:#f5fdf5}
+.notif-item.unread::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:0 2px 2px 0;background:#66bb6a}
+/* ── Icon containers ── */
+.notif-ico{
+  width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.notif-ico.scan     {background:#e8f5e9;color:#2e7d32}
+.notif-ico.chat     {background:#e3f2fd;color:#1565c0}
+.notif-ico.account  {background:#fff8e1;color:#f57f17}
+.notif-ico.low_conf {background:#fff3e0;color:#e65100}
+.notif-ico.system   {background:#f3e5f5;color:#7b1fa2}
+.notif-body{flex:1;min-width:0}
+.notif-title{font-size:.84rem;font-weight:700;color:#1a2e1a;line-height:1.3;margin-bottom:.2rem}
+.notif-msg{font-size:.76rem;color:#4a6741;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.notif-time{font-size:.68rem;color:#b0c4b0;margin-top:.25rem;display:flex;align-items:center;gap:.3rem}
+.notif-del{
+  opacity:0;width:22px;height:22px;border-radius:6px;flex-shrink:0;
+  background:none;border:1px solid rgba(244,67,54,.2);
+  color:#ef9a9a;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .2s;margin-top:1px;
+}
+.notif-item:hover .notif-del{opacity:1}
+.notif-del:hover{background:rgba(244,67,54,.1);border-color:#ef5350;color:#c62828}
+.notif-empty{text-align:center;padding:2.5rem 1rem;color:#b0c4b0}
+.notif-empty svg{margin-bottom:.6rem;opacity:.35;display:block;margin-inline:auto}
+.notif-empty p{font-size:.84rem}
+/* loading skeleton */
+.notif-skeleton{padding:.85rem 1.1rem;border-bottom:1px solid #f7f7f7}
+.notif-skel-line{height:10px;border-radius:5px;background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%);background-size:200% 100%;animation:skelShimmer 1.2s infinite}
+@keyframes skelShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+</style>
+
+
+<!-- ══ NOTIF HTML — letakkan di navbar SEBELUM div navProfileTrigger ══ -->
+<!--
+  Di semua file user (riwayat.html, chat.html, profile.html, laporan_user.html, index.html),
+  cari bagian ini di dalam <nav>:
+
+    <div style="display:flex;align-items:center;position:relative;margin-left:auto">
+      <div class="nav-profile-trigger" ...>
+
+  Ganti wrapper tersebut dengan kode di bawah (atau tambahkan .notif-wrap sebelum nav-profile-trigger):
+-->
+<div style="display:flex;align-items:center;gap:.6rem;position:relative;margin-left:auto">
+
+  <!-- NOTIFIKASI BELL -->
+  <div class="notif-wrap" id="userNotifWrap">
+    <button class="notif-btn" id="userNotifBtn" onclick="toggleUserNotif()" title="Notifikasi" type="button">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+      <span class="notif-badge" id="userNotifBadge" style="display:none"></span>
+    </button>
+
+    <div class="notif-dropdown" id="userNotifDropdown">
+      <div class="notif-header">
+        <span class="notif-header-title">Notifikasi</span>
+        <button class="notif-read-all" id="userReadAllBtn" type="button">Tandai semua dibaca</button>
+      </div>
+      <div class="notif-list" id="userNotifList">
+        <!-- skeleton awal -->
+        <div class="notif-skeleton">
+          <div class="notif-skel-line" style="width:60%;margin-bottom:.5rem"></div>
+          <div class="notif-skel-line" style="width:85%"></div>
+        </div>
+        <div class="notif-skeleton">
+          <div class="notif-skel-line" style="width:45%;margin-bottom:.5rem"></div>
+          <div class="notif-skel-line" style="width:70%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile trigger (sudah ada — jangan duplikat, hanya tunjukkan posisi) -->
+  <div class="nav-profile-trigger" id="navProfileTrigger" onclick="toggleProfileDropdown()">
+    <!-- ... isi yang sudah ada ... -->
+  </div>
+
+</div>
+
+
+<!-- ══ NOTIF JS — masukkan sebelum </body> ══ -->
+<script id="NOTIF_JS_COPY_BEFORE_BODY">
+(function(){
+  'use strict';
+
+  /* ── SVG icons per tipe (tidak pakai emoji) ── */
+  const ICONS = {
+    scan: `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+             <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+           </svg>`,
+    chat: `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+           </svg>`,
+    account: `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>`,
+    low_conf: `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                 <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                 <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+               </svg>`,
+    system: `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+               <circle cx="12" cy="12" r="10"/>
+               <line x1="12" y1="8" x2="12" y2="12"/>
+               <line x1="12" y1="16" x2="12.01" y2="16"/>
+             </svg>`,
+  };
+
+  /* ── DOM refs ── */
+  const wrapEl   = () => document.getElementById('userNotifWrap');
+  const btnEl    = () => document.getElementById('userNotifBtn');
+  const dropEl   = () => document.getElementById('userNotifDropdown');
+  const badgeEl  = () => document.getElementById('userNotifBadge');
+  const listEl   = () => document.getElementById('userNotifList');
+
+  /* ── Escape HTML ── */
+  function esc(s){
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* ── Open / Close ── */
+  window.toggleUserNotif = function(){
+    const drop = dropEl();
+    if(!drop) return;
+    if(drop.classList.contains('open')){ closeUserNotif(); return; }
+    btnEl()?.classList.add('open');
+    drop.classList.add('open');
+    fetchUserNotifs();
+    /* tutup profile dropdown bila terbuka */
+    document.getElementById('navProfileDropdown')?.classList.remove('open');
+    document.getElementById('navProfileTrigger')?.classList.remove('open');
+  };
+
+  function closeUserNotif(){
+    btnEl()?.classList.remove('open');
+    dropEl()?.classList.remove('open');
+  }
+
+  /* tutup klik luar / Escape */
+  document.addEventListener('click', function(e){
+    const wrap = wrapEl();
+    if(wrap && !wrap.contains(e.target)) closeUserNotif();
+  });
+  document.addEventListener('keydown', e => { if(e.key==='Escape') closeUserNotif(); });
+
+  /* ── Render ── */
+  function renderUserNotifs(data){
+    const badge = badgeEl();
+    const list  = listEl();
+    if(!badge || !list) return;
+
+    /* badge */
+    if(data.unread > 0){
+      badge.textContent = data.unread > 9 ? '9+' : data.unread;
+      badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
+    }
+
+    if(!data.items || data.items.length === 0){
+      list.innerHTML = `
+        <div class="notif-empty">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <p>Belum ada notifikasi</p>
+        </div>`;
+      return;
+    }
+
+    /*
+      FIX UTAMA: simpan link di data-link attribute, bukan di onclick string.
+      Ini menghindari masalah escaping URL yang menyebabkan navigasi gagal.
+    */
+    list.innerHTML = data.items.map(n => {
+      const ico  = ICONS[n.type] || ICONS.system;
+      const link = n.link || '#';
+      return `
+        <div class="notif-item ${n.is_read ? '' : 'unread'}"
+             data-notif-id="${n.id}"
+             data-notif-link="${esc(link)}"
+             role="button" tabindex="0">
+          <div class="notif-ico ${esc(n.type)}">${ico}</div>
+          <div class="notif-body">
+            <div class="notif-title">${esc(n.title)}</div>
+            <div class="notif-msg">${esc(n.message)}</div>
+            <div class="notif-time">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              ${esc(n.time_ago)}
+            </div>
+          </div>
+          <button class="notif-del js-notif-del" data-notif-del-id="${n.id}" type="button" title="Hapus">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>`;
+    }).join('');
+
+    /* event delegation — satu listener di container, bukan onclick per item */
+    attachListeners();
+  }
+
+  /* ── Event delegation (dipasang ulang setiap render) ── */
+  let listenerAttached = false;
+  function attachListeners(){
+    const list = listEl();
+    if(!list || listenerAttached) return;
+    listenerAttached = true;
+
+    list.addEventListener('click', function(e){
+      /* tombol hapus */
+      const delBtn = e.target.closest('.js-notif-del');
+      if(delBtn){
+        e.stopPropagation();
+        const id = delBtn.dataset.notifDelId;
+        if(id) deleteNotif(id);
+        return;
+      }
+
+      /* klik pada item → tandai baca lalu navigasi */
+      const item = e.target.closest('.notif-item');
+      if(!item) return;
+
+      const id   = item.dataset.notifId;
+      const link = item.dataset.notifLink;
+
+      if(!link || link === '#') return;
+
+      /* tandai baca dulu (fire-and-forget), lalu langsung navigate */
+      if(id){
+        fetch('/api/notifications/' + id + '/read', {
+          method: 'POST',
+          credentials: 'same-origin'
+        }).catch(()=>{});
+      }
+
+      closeUserNotif();
+
+      /* FIX: navigasi langsung tanpa menunggu fetch selesai */
+      window.location.href = link;
+    });
+
+    /* keyboard accessibility */
+    list.addEventListener('keydown', function(e){
+      if(e.key === 'Enter' || e.key === ' '){
+        const item = e.target.closest('.notif-item');
+        if(item) item.click();
+      }
+    });
+  }
+
+  function deleteNotif(id){
+    fetch('/api/notifications/' + id + '/delete', {
+      method: 'POST',
+      credentials: 'same-origin'
+    }).then(() => {
+      listenerAttached = false; /* reset agar listener dipasang ulang */
+      fetchUserNotifs();
+    }).catch(()=>{});
+  }
+
+  /* ── Read All ── */
+  document.getElementById('userReadAllBtn')?.addEventListener('click', function(){
+    fetch('/api/notifications/read-all', {
+      method: 'POST',
+      credentials: 'same-origin'
+    }).then(() => {
+      listenerAttached = false;
+      fetchUserNotifs();
+    }).catch(()=>{});
+  });
+
+  /* ── Fetch ── */
+  function fetchUserNotifs(){
+    fetch('/api/notifications', {credentials:'same-origin'})
+      .then(r => { if(!r.ok) throw new Error('fetch failed'); return r.json(); })
+      .then(d => { if(d) renderUserNotifs(d); })
+      .catch(()=>{});
+  }
+
+  /* ── Tutup notif saat profile dropdown dibuka ── */
+  const _origToggle = window.toggleProfileDropdown;
+  window.toggleProfileDropdown = function(){
+    closeUserNotif();
+    if(typeof _origToggle === 'function') _origToggle.apply(this, arguments);
+  };
+
+  /* ── Initial load + polling setiap 15 detik ── */
+  fetchUserNotifs();
+  setInterval(function(){
+    /* hanya poll saat dropdown tertutup supaya tidak mengganggu interaksi */
+    if(!dropEl()?.classList.contains('open')){
+      listenerAttached = false;
+      fetchUserNotifs();
+    }
+  }, 15000);
+
+})();
+</script>

@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Admin{% endblock %} – RiceScanAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --gd:#1b5e20;--gm:#2e7d32;--gl:#66bb6a;--gp:#a5d6a7;--gu:#e8f5e9;
+  --tx:#1a2e1a;--mu:#4a6741;--bg:#f2f7f2;
+  --sidebar:240px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);
+     display:flex;min-height:100vh;overflow-x:hidden}
+
+/* ══ SIDEBAR ══ */
+.sidebar{
+  width:var(--sidebar);flex-shrink:0;
+  background:linear-gradient(180deg,#0a1a0a 0%,#0d2010 100%);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;bottom:0;z-index:200;
+  border-right:1px solid rgba(102,187,106,.1);
+}
+.sb-brand{
+  padding:1.5rem 1.25rem 1.25rem;
+  display:flex;align-items:center;gap:.6rem;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.sb-brand-ico{width:34px;height:34px;border-radius:50% 8px 50% 8px;flex-shrink:0;
+              background:linear-gradient(135deg,var(--gl),var(--gm));
+              display:flex;align-items:center;justify-content:center;color:#fff}
+.sb-brand-txt{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1rem;
+              color:#fff;line-height:1.1}
+.sb-brand-txt span{color:var(--gl)}
+.sb-badge{font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+          background:rgba(249,168,37,.15);color:#f9a825;border:1px solid rgba(249,168,37,.3);
+          padding:.15rem .5rem;border-radius:20px;margin-top:.2rem;display:inline-block}
+
+.sb-section{padding:.75rem 1rem .25rem;font-size:.66rem;font-weight:700;letter-spacing:.1em;
+            text-transform:uppercase;color:rgba(255,255,255,.25)}
+
+.sb-nav{flex:1;overflow-y:auto;padding:.5rem .75rem}
+.sb-link{
+  display:flex;align-items:center;gap:.65rem;
+  padding:.65rem .85rem;border-radius:10px;margin-bottom:.2rem;
+  text-decoration:none;font-size:.87rem;font-weight:500;
+  color:rgba(255,255,255,.55);transition:all .2s;
+}
+.sb-link:hover{background:rgba(102,187,106,.08);color:rgba(255,255,255,.85)}
+.sb-link.active{background:rgba(102,187,106,.15);color:var(--gl);font-weight:600}
+.sb-link .ico{width:18px;height:18px;flex-shrink:0;opacity:.7}
+.sb-link:hover .ico,.sb-link.active .ico{opacity:1}
+
+.sb-divider{height:1px;background:rgba(255,255,255,.06);margin:.5rem 0}
+
+.sb-bottom{padding:1rem .75rem;border-top:1px solid rgba(255,255,255,.06)}
+.sb-user{display:flex;align-items:center;gap:.65rem;margin-bottom:.75rem}
+.sb-user-ico{width:32px;height:32px;border-radius:50%;flex-shrink:0;
+             background:linear-gradient(135deg,var(--gm),var(--gl));
+             display:flex;align-items:center;justify-content:center;
+             border:1.5px solid rgba(102,187,106,.3);overflow:hidden;color:#fff}
+.sb-user-name{font-size:.82rem;font-weight:600;color:#fff;line-height:1.2}
+.sb-user-role{font-size:.68rem;color:rgba(249,168,37,.8);font-weight:600}
+.sb-logout{display:flex;align-items:center;gap:.5rem;padding:.55rem .85rem;border-radius:10px;
+           text-decoration:none;font-size:.83rem;font-weight:500;
+           color:#ef9a9a;background:rgba(244,67,54,.08);border:1px solid rgba(244,67,54,.2);
+           transition:all .2s;cursor:pointer}
+.sb-logout:hover{background:rgba(244,67,54,.16)}
+.sb-logout svg{opacity:.8}
+
+/* ══ TOPBAR + CONTENT ══ */
+.layout{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{
+  background:#fff;border-bottom:1px solid rgba(102,187,106,.12);
+  padding:.9rem 2rem;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;box-shadow:0 1px 8px rgba(0,0,0,.04);
+}
+.topbar-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.05rem;font-weight:800;color:var(--tx)}
+.topbar-right{display:flex;align-items:center;gap:.75rem}
+.topbar-back{
+  display:flex;align-items:center;gap:.4rem;
+  color:var(--mu);text-decoration:none;font-size:.84rem;font-weight:500;
+  padding:.3rem .8rem;border-radius:20px;border:1px solid rgba(102,187,106,.2);
+  background:var(--gu);transition:all .2s;
+}
+.topbar-back:hover{border-color:var(--gl);color:var(--gm)}
+
+.content{padding:2rem;flex:1}
+.content-inner{max-width:1100px}
+
+/* ══ FLASH ══ */
+.alerts{margin-bottom:1.25rem}
+.alert{padding:.7rem 1rem;border-radius:10px;font-size:.87rem;margin-bottom:.4rem;
+       display:flex;align-items:center;gap:.5rem}
+.alert-success{background:#e8f5e9;color:#2e7d32;border:1px solid #c8e6c9}
+.alert-danger {background:#fdecea;color:#c62828;border:1px solid #f5c6cb}
+.alert-warning{background:#fff8e1;color:#f57f17;border:1px solid #ffe082}
+.alert-info   {background:#e3f2fd;color:#1565c0;border:1px solid #bbdefb}
+
+/* ══ SHARED COMPONENTS ══ */
+.card{background:#fff;border-radius:18px;border:1px solid rgba(102,187,106,.12);
+      box-shadow:0 2px 12px rgba(0,0,0,.05);padding:1.5rem}
+.card-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:.95rem;font-weight:800;
+            color:var(--tx);margin-bottom:1.25rem;display:flex;align-items:center;gap:.5rem}
+
+/* stat cards */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;margin-bottom:2rem}
+.stat-card{background:#fff;border-radius:16px;padding:1.25rem 1.5rem;
+           border:1px solid rgba(102,187,106,.12);box-shadow:0 2px 10px rgba(0,0,0,.04);
+           position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.08)}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat-card.green::before {background:linear-gradient(90deg,var(--gm),var(--gl))}
+.stat-card.blue::before  {background:linear-gradient(90deg,#1565c0,#42a5f5)}
+.stat-card.orange::before{background:linear-gradient(90deg,#e65100,#ffa726)}
+.stat-card.red::before   {background:linear-gradient(90deg,#c62828,#ef5350)}
+.stat-card.purple::before{background:linear-gradient(90deg,#6a1b9a,#ab47bc)}
+.stat-ico{margin-bottom:.5rem;color:var(--gm);opacity:.7}
+.stat-ico.blue  {color:#1565c0}
+.stat-ico.red   {color:#c62828}
+.stat-ico.orange{color:#e65100}
+.stat-ico.purple{color:#6a1b9a}
+.stat-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:2rem;font-weight:800;color:var(--tx);line-height:1}
+.stat-lbl{font-size:.78rem;color:var(--mu);margin-top:.25rem}
+
+/* table */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+thead th{text-align:left;font-size:.73rem;letter-spacing:.07em;text-transform:uppercase;
+         color:var(--mu);padding:.6rem .85rem;border-bottom:2px solid #f0f0f0;font-weight:700;
+         white-space:nowrap}
+tbody td{padding:.7rem .85rem;border-bottom:1px solid #f7f7f7;color:var(--tx);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:#fafffe}
+
+/* disease dots */
+.dot-blast {display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef5350;flex-shrink:0}
+.dot-blight{display:inline-block;width:8px;height:8px;border-radius:50%;background:#ffa726;flex-shrink:0}
+.dot-tungro{display:inline-block;width:8px;height:8px;border-radius:50%;background:#42a5f5;flex-shrink:0}
+.dot-unknown{display:inline-block;width:8px;height:8px;border-radius:50%;background:#9e9e9e;flex-shrink:0}
+
+/* badges */
+.badge{display:inline-flex;align-items:center;gap:.3rem;
+       padding:.22rem .65rem;border-radius:20px;font-size:.73rem;font-weight:700}
+.badge-green {background:var(--gu);color:var(--gm)}
+.badge-red   {background:#fdecea;color:#c62828}
+.badge-blue  {background:#e3f2fd;color:#1565c0}
+.badge-orange{background:#fff3e0;color:#e65100}
+.badge-gray  {background:#f5f5f5;color:#757575}
+.badge-gold  {background:rgba(249,168,37,.12);color:#f57f17}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.1rem;
+     border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.85rem;
+     font-weight:600;cursor:pointer;border:none;transition:all .2s;text-decoration:none}
+.btn svg{flex-shrink:0}
+.btn-primary{background:linear-gradient(135deg,var(--gl),var(--gm));color:#fff;
+             box-shadow:0 3px 10px rgba(102,187,106,.3)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(102,187,106,.45)}
+.btn-danger{background:rgba(244,67,54,.08);color:#c62828;border:1px solid rgba(244,67,54,.25)}
+.btn-danger:hover{background:rgba(244,67,54,.15)}
+.btn-warning{background:rgba(255,152,0,.1);color:#e65100;border:1px solid rgba(255,152,0,.3)}
+.btn-warning:hover{background:rgba(255,152,0,.2)}
+.btn-secondary{background:var(--gu);color:var(--gm);border:1px solid rgba(102,187,106,.2)}
+.btn-secondary:hover{background:var(--gp)}
+.btn-sm{padding:.35rem .75rem;font-size:.78rem}
+
+/* form */
+.field{margin-bottom:1rem}
+label{display:block;font-size:.8rem;font-weight:600;color:var(--mu);margin-bottom:.35rem}
+input[type=text],input[type=email],input[type=password],select{
+  width:100%;padding:.72rem .95rem;border:1.5px solid #dde8dd;border-radius:10px;
+  font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--tx);
+  background:#fafffe;outline:none;transition:border-color .2s}
+input:focus,select:focus{border-color:var(--gl);box-shadow:0 0 0 3px rgba(102,187,106,.12)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.hint{font-size:.75rem;color:#9ab09a;margin-top:.25rem}
+
+/* pagination */
+.pagination{display:flex;align-items:center;gap:.35rem;margin-top:1.5rem;flex-wrap:wrap}
+.pg{min-width:34px;height:34px;border-radius:8px;display:flex;align-items:center;
+    justify-content:center;font-size:.83rem;font-weight:600;text-decoration:none;
+    border:1.5px solid rgba(102,187,106,.2);color:var(--mu);background:#fff;
+    transition:all .2s;padding:0 .55rem}
+.pg:hover{border-color:var(--gl);color:var(--gm);background:var(--gu)}
+.pg.active{background:var(--gm);color:#fff;border-color:var(--gm)}
+.pg.disabled{opacity:.35;pointer-events:none}
+
+/* responsive */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .layout{margin-left:0}
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .row2{grid-template-columns:1fr}
+}
+
+/* ══ NOTIFICATION BELL ══ */
+.notif-wrap{position:relative}
+.notif-btn{
+  position:relative;width:38px;height:38px;border-radius:10px;
+  border:1px solid rgba(102,187,106,.2);background:var(--gu);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .2s;color:var(--mu);
+}
+.notif-btn:hover,.notif-btn.open{border-color:var(--gl);background:#dff0df;color:var(--gm)}
+.notif-badge{
+  position:absolute;top:-4px;right:-4px;
+  min-width:18px;height:18px;border-radius:9px;
+  background:#ef5350;color:#fff;
+  font-size:.62rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 4px;border:2px solid #fff;
+  animation:notifPop .3s cubic-bezier(.22,1,.36,1);
+}
+@keyframes notifPop{from{transform:scale(0)}to{transform:scale(1)}}
+.notif-dropdown{
+  position:absolute;top:calc(100% + 10px);right:0;
+  width:340px;max-height:480px;
+  background:#fff;border-radius:18px;
+  border:1px solid rgba(102,187,106,.15);
+  box-shadow:0 20px 50px rgba(0,0,0,.14),0 4px 12px rgba(0,0,0,.06);
+  display:flex;flex-direction:column;overflow:hidden;
+  opacity:0;pointer-events:none;
+  transform:translateY(-8px) scale(.97);
+  transition:opacity .22s,transform .22s cubic-bezier(.22,1,.36,1);
+  z-index:500;
+}
+.notif-dropdown.open{opacity:1;pointer-events:all;transform:translateY(0) scale(1)}
+.notif-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.9rem 1.1rem .7rem;
+  border-bottom:1px solid rgba(102,187,106,.1);flex-shrink:0;
+}
+.notif-header-title{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:.92rem;color:var(--tx)}
+.notif-read-all{font-size:.74rem;font-weight:600;color:var(--gm);background:none;border:none;cursor:pointer;padding:.2rem .5rem;border-radius:6px;transition:background .2s}
+.notif-read-all:hover{background:var(--gu)}
+.notif-list{overflow-y:auto;flex:1;max-height:360px}
+.notif-list::-webkit-scrollbar{width:4px}
+.notif-list::-webkit-scrollbar-thumb{background:rgba(102,187,106,.3);border-radius:2px}
+.notif-item{
+  display:flex;align-items:flex-start;gap:.75rem;
+  padding:.85rem 1.1rem;border-bottom:1px solid #f7f7f7;
+  cursor:pointer;transition:background .18s;text-decoration:none;color:inherit;position:relative;
+}
+.notif-item:hover{background:#fafffe}
+.notif-item.unread{background:#f5fdf5}
+.notif-item.unread::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:0 2px 2px 0;background:var(--gl)}
+.notif-ico{width:36px;height:36px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1rem}
+.notif-ico.scan,.notif-ico.new_scan{background:#e8f5e9;color:var(--gm)}
+.notif-ico.chat   {background:#e3f2fd;color:#1565c0}
+.notif-ico.account{background:#fff8e1;color:#f57f17}
+.notif-ico.new_user{background:#f3e5f5;color:#7b1fa2}
+.notif-ico.low_conf{background:#fff3e0;color:#e65100}
+.notif-body{flex:1;min-width:0}
+.notif-title{font-size:.84rem;font-weight:700;color:var(--tx);line-height:1.3;margin-bottom:.2rem}
+.notif-msg{font-size:.76rem;color:var(--mu);line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.notif-time{font-size:.68rem;color:#b0c4b0;margin-top:.25rem}
+.notif-del{opacity:0;width:22px;height:22px;border-radius:6px;flex-shrink:0;background:none;border:1px solid rgba(244,67,54,.2);color:#ef9a9a;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;margin-top:1px}
+.notif-item:hover .notif-del{opacity:1}
+.notif-del:hover{background:rgba(244,67,54,.1);border-color:#ef5350;color:#c62828}
+.notif-empty{text-align:center;padding:2.5rem 1rem;color:#b0c4b0}
+.notif-empty svg{margin-bottom:.6rem;opacity:.35}
+.notif-empty p{font-size:.84rem}
+</style>
+{% block head %}{% endblock %}
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-brand-ico">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 19.34L5.71 21l1-1c1-1 2.25-2.51 3.8-3.6C13 14.82 17.41 14 21 10.4c0-1.11-.29-2.2-1-3.38z"/><path d="M3.82 19.34c.71.71 1.42 1.42 1.89 1.89"/></svg>
+    </div>
+    <div>
+      <div class="sb-brand-txt">RiceScan<span>AI</span></div>
+      <div class="sb-badge">Admin Panel</div>
+    </div>
+  </div>
+
+  <nav class="sb-nav">
+    <div class="sb-section">Menu</div>
+    <a href="{{ url_for('admin_dashboard') }}"
+       class="sb-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+      Dashboard
+    </a>
+    <a href="{{ url_for('admin_users') }}"
+       class="sb-link {% if 'admin_user' in request.endpoint %}active{% endif %}">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Manajemen User
+    </a>
+    <a href="{{ url_for('admin_tambah_user') }}"
+       class="sb-link {% if request.endpoint == 'admin_tambah_user' %}active{% endif %}">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+      Tambah User
+    </a>
+    <a href="{{ url_for('admin_laporan') }}"
+       class="sb-link {% if request.endpoint == 'admin_laporan' %}active{% endif %}">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Laporan
+    </a>
+
+    <div class="sb-divider"></div>
+    <div class="sb-section">Aplikasi</div>
+    <a href="{{ url_for('admin_chat_list') }}"
+       class="sb-link {% if 'chat' in request.endpoint %}active{% endif %}" style="position:relative">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Chat
+      <span id="adminChatBadge" style="display:none;margin-left:auto;background:#ef5350;color:#fff;font-size:.65rem;font-weight:700;padding:.1rem .4rem;border-radius:10px"></span>
+    </a>
+    <a href="{{ url_for('index') }}" class="sb-link">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Halaman Deteksi
+    </a>
+    <a href="{{ url_for('riwayat') }}" class="sb-link">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Riwayat Saya
+    </a>
+  </nav>
+
+  <div class="sb-bottom">
+    <div class="sb-user">
+      <div class="sb-user-ico">
+        {% if current_user.avatar_url() %}
+          <img src="{{ current_user.avatar_url() }}" alt="{{ current_user.nama }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">
+        {% else %}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        {% endif %}
+      </div>
+      <div>
+        <div class="sb-user-name">{{ current_user.nama }}</div>
+        <div class="sb-user-role">Administrator</div>
+      </div>
+    </div>
+    <a href="#" class="sb-logout" id="sidebarLogoutBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Logout
+    </a>
+  </div>
+</aside>
+
+<!-- ══ MAIN LAYOUT ══ -->
+<div class="layout">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-title">{% block topbar_title %}Admin Panel{% endblock %}</div>
+    <div class="topbar-right">
+      {% block topbar_actions %}{% endblock %}
+
+      <!-- ══ NOTIFICATION BELL (ADMIN) ══ -->
+      <div class="notif-wrap" id="adminNotifWrap">
+        <button class="notif-btn" id="adminNotifBtn" onclick="toggleAdminNotif()" title="Notifikasi">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-badge" id="adminNotifBadge" style="display:none"></span>
+        </button>
+        <div class="notif-dropdown" id="adminNotifDropdown">
+          <div class="notif-header">
+            <span class="notif-header-title">Notifikasi</span>
+            <button class="notif-read-all" id="adminReadAllBtn" onclick="adminReadAll()">Tandai semua dibaca</button>
+          </div>
+          <div class="notif-list" id="adminNotifList">
+            <div class="notif-empty">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <p>Belum ada notifikasi</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <a href="{{ url_for('index') }}" class="topbar-back">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Kembali ke Aplikasi
+      </a>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+    <div class="content-inner">
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="alerts">
+        {% for cat, msg in messages %}
+        <div class="alert alert-{{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+
+    </div>
+  </div>
+</div>
+
+<script>
+setTimeout(() => {
+  document.querySelectorAll('.alert').forEach(el => {
+    el.style.transition = 'opacity .4s';
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 400);
+  });
+}, 4000);
+</script>
+{% block scripts %}{% endblock %}
+
+<!-- ══ LOGOUT MODAL ══ -->
+<style>
+.logout-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.logout-overlay.show{opacity:1;pointer-events:all}
+.logout-modal{background:#fff;border-radius:20px;padding:2rem 2rem 1.5rem;width:100%;max-width:360px;
+  margin:1rem;transform:translateY(20px) scale(.97);transition:transform .25s;
+  box-shadow:0 24px 64px rgba(0,0,0,.18);text-align:center}
+.logout-overlay.show .logout-modal{transform:translateY(0) scale(1)}
+.logout-modal-icon{width:64px;height:64px;border-radius:50%;margin:0 auto 1rem;
+  background:rgba(244,67,54,.08);border:2px solid rgba(244,67,54,.2);
+  display:flex;align-items:center;justify-content:center;color:#c62828}
+.logout-modal h3{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.1rem;font-weight:800;color:#1a2e1a;margin-bottom:.4rem}
+.logout-modal p{font-size:.87rem;color:#4a6741;line-height:1.6;margin-bottom:1.5rem}
+.logout-modal-actions{display:flex;gap:.75rem}
+.btn-lc{flex:1;padding:.7rem;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.88rem;
+  font-weight:600;cursor:pointer;background:#f2f7f2;border:1.5px solid rgba(102,187,106,.2);color:#4a6741;transition:all .2s}
+.btn-lc:hover{background:#e8f5e9;border-color:#66bb6a}
+.btn-lx{flex:1;padding:.7rem;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.88rem;
+  font-weight:700;cursor:pointer;background:linear-gradient(135deg,#ef5350,#c62828);
+  border:none;color:#fff;transition:all .2s;box-shadow:0 4px 14px rgba(198,40,40,.25);
+  text-decoration:none;display:flex;align-items:center;justify-content:center;gap:.4rem}
+.btn-lx:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(198,40,40,.38)}
+</style>
+
+<div class="logout-overlay" id="logoutOverlay">
+  <div class="logout-modal">
+    <div class="logout-modal-icon">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </div>
+    <h3>Konfirmasi Logout</h3>
+    <p>Apakah Anda yakin ingin keluar dari sesi ini?</p>
+    <div class="logout-modal-actions">
+      <button class="btn-lc" id="logoutCancel">Batal</button>
+      <a href="{{ url_for('logout') }}" class="btn-lx">Ya, Logout</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const overlay = document.getElementById('logoutOverlay');
+  document.getElementById('logoutCancel').addEventListener('click', () => overlay.classList.remove('show'));
+  overlay.addEventListener('click', e => { if(e.target===overlay) overlay.classList.remove('show'); });
+  document.addEventListener('keydown', e => { if(e.key==='Escape') overlay.classList.remove('show'); });
+  document.getElementById('sidebarLogoutBtn').addEventListener('click', e => {
+    e.preventDefault(); overlay.classList.add('show');
+  });
+})();
+</script>
+
+<script>
+// ── ADMIN CHAT UNREAD BADGE ──
+(function(){
+  function updateAdminChatBadge(){
+    fetch('/admin/chat/unread-count', {credentials:'same-origin'})
+      .then(r=>r.json())
+      .then(d=>{
+        const badge = document.getElementById('adminChatBadge');
+        if(!badge) return;
+        if(d.count > 0){
+          badge.textContent = d.count > 9 ? '9+' : d.count;
+          badge.style.display = 'inline';
+        } else {
+          badge.style.display = 'none';
+        }
+      }).catch(()=>{});
+  }
+  updateAdminChatBadge();
+  setInterval(updateAdminChatBadge, 10000);
+})();
+</script>
+<!-- ══ NOTIFICATION SYSTEM (ADMIN) ══ -->
+<script>
+(function(){
+  const ICONS = {
+    scan:     '🔬',
+    new_scan: '🔬',
+    chat:     '💬',
+    account:  '⚙️',
+    new_user: '👤',
+    low_conf: '⚠️',
+    system:   '📢',
+  };
+
+  function toggleAdminNotif(){
+    const btn  = document.getElementById('adminNotifBtn');
+    const drop = document.getElementById('adminNotifDropdown');
+    const open = drop.classList.contains('open');
+    if(open){ closeAdminNotif(); return; }
+    btn.classList.add('open');
+    drop.classList.add('open');
+    fetchAdminNotifs();
+  }
+  window.toggleAdminNotif = toggleAdminNotif;
+
+  function closeAdminNotif(){
+    document.getElementById('adminNotifBtn').classList.remove('open');
+    document.getElementById('adminNotifDropdown').classList.remove('open');
+  }
+
+  // Close on outside click
+  document.addEventListener('click', function(e){
+    const wrap = document.getElementById('adminNotifWrap');
+    if(wrap && !wrap.contains(e.target)) closeAdminNotif();
+  });
+  document.addEventListener('keydown', e => { if(e.key==='Escape') closeAdminNotif(); });
+
+  function renderNotifs(data){
+    const badge = document.getElementById('adminNotifBadge');
+    const list  = document.getElementById('adminNotifList');
+
+    // Badge
+    if(data.unread > 0){
+      badge.textContent = data.unread > 9 ? '9+' : data.unread;
+      badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
+    }
+
+    if(!data.items || data.items.length === 0){
+      list.innerHTML = `<div class="notif-empty">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <p>Belum ada notifikasi</p></div>`;
+      return;
+    }
+
+    list.innerHTML = data.items.map(n => `
+      <div class="notif-item ${n.is_read ? '' : 'unread'}" 
+           onclick="adminNotifClick(event, ${n.id}, '${n.link.replace(/'/g,"\\'")}')">
+        <div class="notif-ico ${n.type}">${ICONS[n.type] || '📢'}</div>
+        <div class="notif-body">
+          <div class="notif-title">${escHtml(n.title)}</div>
+          <div class="notif-msg">${escHtml(n.message)}</div>
+          <div class="notif-time">${n.time_ago}</div>
+        </div>
+        <button class="notif-del" onclick="adminNotifDel(event, ${n.id})" title="Hapus">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>`).join('');
+  }
+
+  function escHtml(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function fetchAdminNotifs(silent){
+    fetch('/admin/api/notifications', {credentials:'same-origin'})
+      .then(r => r.json())
+      .then(d => { if(d) renderNotifs(d); })
+      .catch(()=>{});
+  }
+
+  window.adminNotifClick = function(e, id, link){
+    if(e.target.closest('.notif-del')) return;
+    fetch('/admin/api/notifications/' + id + '/read', {method:'POST', credentials:'same-origin'});
+    closeAdminNotif();
+    window.location.href = link;
+  };
+
+  window.adminNotifDel = function(e, id){
+    e.stopPropagation();
+    fetch('/admin/api/notifications/' + id + '/delete', {method:'POST', credentials:'same-origin'})
+      .then(() => fetchAdminNotifs());
+  };
+
+  window.adminReadAll = function(){
+    fetch('/admin/api/notifications/read-all', {method:'POST', credentials:'same-origin'})
+      .then(() => fetchAdminNotifs());
+  };
+
+  // Initial load + polling every 15s
+  fetchAdminNotifs();
+  setInterval(fetchAdminNotifs, 15000);
+})();
+</script>
+</body>
+</html>

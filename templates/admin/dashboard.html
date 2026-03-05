@@ -1,0 +1,181 @@
+{% extends 'admin/base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block topbar_title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- Stat Cards -->
+<div class="stat-grid">
+  <div class="stat-card green">
+    <div class="stat-ico">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </div>
+    <div class="stat-val">{{ total_users }}</div>
+    <div class="stat-lbl">Total User</div>
+  </div>
+  <div class="stat-card blue">
+    <div class="stat-ico blue">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    </div>
+    <div class="stat-val">{{ user_aktif }}</div>
+    <div class="stat-lbl">User Aktif</div>
+  </div>
+  <div class="stat-card red">
+    <div class="stat-ico red">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+    </div>
+    <div class="stat-val">{{ user_nonaktif }}</div>
+    <div class="stat-lbl">User Nonaktif</div>
+  </div>
+  <div class="stat-card orange">
+    <div class="stat-ico orange">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    </div>
+    <div class="stat-val">{{ total_deteksi }}</div>
+    <div class="stat-lbl">Total Deteksi</div>
+  </div>
+  <div class="stat-card purple">
+    <div class="stat-ico purple">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    </div>
+    <div class="stat-val">{{ total_admins }}</div>
+    <div class="stat-lbl">Total Admin</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem">
+
+  <!-- Statistik Penyakit -->
+  <div class="card">
+    <div class="card-title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      Statistik Penyakit Global
+    </div>
+    {% if stats_dict %}
+      {% for label, count in stats_dict.items() %}
+      {% set pct = ((count / total_deteksi) * 100) | round(1) if total_deteksi > 0 else 0 %}
+      <div style="margin-bottom:1rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:.85rem;margin-bottom:.3rem">
+          <span style="display:flex;align-items:center;gap:.45rem;font-weight:600">
+            {% if 'blast' in label|lower %}<span class="dot-blast"></span>
+            {% elif 'blight' in label|lower %}<span class="dot-blight"></span>
+            {% elif 'tungro' in label|lower %}<span class="dot-tungro"></span>
+            {% else %}<span class="dot-unknown"></span>{% endif %}
+            {{ label }}
+          </span>
+          <span style="color:var(--gm);font-weight:700">{{ count }} ({{ pct }}%)</span>
+        </div>
+        <div style="height:8px;background:#e8f5e9;border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:{{ pct }}%;background:linear-gradient(90deg,var(--gm),var(--gl));border-radius:4px;transition:width .6s"></div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div style="text-align:center;color:var(--mu);padding:1.5rem;font-size:.88rem">Belum ada data deteksi</div>
+    {% endif %}
+  </div>
+
+  <!-- User Terbaru -->
+  <div class="card">
+    <div class="card-title" style="justify-content:space-between">
+      <span style="display:flex;align-items:center;gap:.5rem">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        User Terbaru
+      </span>
+      <a href="{{ url_for('admin_users') }}" style="font-size:.78rem;font-weight:500;color:var(--gm);text-decoration:none">Lihat semua →</a>
+    </div>
+    {% for u in users_baru %}
+    <div style="display:flex;align-items:center;gap:.75rem;padding:.6rem 0;border-bottom:1px solid #f5f5f5">
+      <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;overflow:hidden;
+                  background:linear-gradient(135deg,var(--gm),var(--gl));
+                  display:flex;align-items:center;justify-content:center;
+                  border:2px solid rgba(102,187,106,.25);color:#fff">
+        {% if u.avatar_url() %}
+          <img src="{{ u.avatar_url() }}" alt="{{ u.nama }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">
+        {% else %}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        {% endif %}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.87rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.nama }}</div>
+        <div style="font-size:.75rem;color:var(--mu)">@{{ u.username }}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        {% if u.is_active %}
+        <span class="badge badge-green" style="font-size:.68rem">Aktif</span>
+        {% else %}
+        <span class="badge badge-red" style="font-size:.68rem">Nonaktif</span>
+        {% endif %}
+        <div style="font-size:.7rem;color:#ccc;margin-top:.1rem">{{ u.created_at.strftime('%d %b') }}</div>
+      </div>
+    </div>
+    {% else %}
+    <div style="text-align:center;color:var(--mu);padding:1.5rem;font-size:.88rem">Belum ada user</div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Deteksi Terbaru -->
+<div class="card">
+  <div class="card-title" style="justify-content:space-between">
+    <span style="display:flex;align-items:center;gap:.5rem">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Aktivitas Deteksi Terbaru
+    </span>
+    <span style="font-size:.78rem;font-weight:400;color:var(--mu)">10 terbaru dari semua user</span>
+  </div>
+  {% if deteksi_baru %}
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Hasil</th>
+          <th>Confidence</th>
+          <th>Waktu</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in deteksi_baru %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:.6rem">
+              <div style="width:30px;height:30px;border-radius:50%;flex-shrink:0;overflow:hidden;
+                          background:linear-gradient(135deg,var(--gm),var(--gl));
+                          display:flex;align-items:center;justify-content:center;
+                          border:1.5px solid rgba(102,187,106,.2);color:#fff">
+                {% if d.user.avatar_url() %}
+                  <img src="{{ d.user.avatar_url() }}" alt="{{ d.user.nama }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">
+                {% else %}
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                {% endif %}
+              </div>
+              <div>
+                <div style="font-weight:600;font-size:.87rem">{{ d.user.nama }}</div>
+                <div style="font-size:.75rem;color:var(--mu)">@{{ d.user.username }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            {% set lbl = d.hasil|lower %}
+            <span class="badge {% if 'blast' in lbl %}badge-red{% elif 'blight' in lbl %}badge-orange{% elif 'tungro' in lbl %}badge-blue{% else %}badge-gray{% endif %}" style="display:inline-flex;align-items:center;gap:.35rem">
+              {% if 'blast' in lbl %}<span class="dot-blast"></span>
+              {% elif 'blight' in lbl %}<span class="dot-blight"></span>
+              {% elif 'tungro' in lbl %}<span class="dot-tungro"></span>
+              {% else %}<span class="dot-unknown"></span>{% endif %}
+              {{ d.hasil }}
+            </span>
+          </td>
+          <td><span style="font-weight:700;color:var(--gm)">{{ d.confidence }}%</span></td>
+          <td style="color:var(--mu);font-size:.82rem;white-space:nowrap">{{ d.created_at.strftime('%d %b %Y, %H:%M') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align:center;color:var(--mu);padding:2rem;font-size:.88rem">Belum ada aktivitas deteksi</div>
+  {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends 'admin/base.html' %}
+{% block title %}Tambah User{% endblock %}
+{% block topbar_title %}Tambah User{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('admin_users') }}" class="btn btn-secondary btn-sm">
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+  Kembali
+</a>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:560px">
+  <div class="card">
+    <div class="card-title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+      Buat Akun User Baru
+    </div>
+
+    <form method="POST">
+      <div class="row2">
+        <div class="field">
+          <label>Nama Lengkap *</label>
+          <input type="text" name="nama" value="{{ nama or '' }}" placeholder="Nama lengkap" required>
+        </div>
+        <div class="field">
+          <label>Username *</label>
+          <input type="text" name="username" value="{{ username or '' }}"
+                 placeholder="min. 3 karakter" required autocomplete="off">
+          <div class="hint">Huruf kecil, angka, tanpa spasi</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Email *</label>
+        <input type="email" name="email" value="{{ email or '' }}" placeholder="email@domain.com" required>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Password *</label>
+          <input type="password" name="password" placeholder="min. 6 karakter" required autocomplete="new-password">
+        </div>
+        <div class="field">
+          <label>Role *</label>
+          <select name="role">
+            <option value="user" {% if role != 'admin' %}selected{% endif %}>User</option>
+            <option value="admin" {% if role == 'admin' %}selected{% endif %}>Admin</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:flex-start;gap:.65rem;padding:.85rem 1rem;
+                  background:var(--gu);border-radius:10px;border-left:3px solid var(--gl);
+                  font-size:.83rem;color:var(--mu);margin-bottom:1.25rem;line-height:1.6">
+        <svg width="15" height="15" style="flex-shrink:0;margin-top:.1rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Akun yang dibuat admin langsung aktif dan bisa langsung digunakan login.
+      </div>
+
+      <div style="display:flex;gap:.75rem">
+        <button type="submit" class="btn btn-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Buat Akun
+        </button>
+        <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">Batal</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

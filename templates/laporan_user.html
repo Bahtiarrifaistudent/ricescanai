@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laporan Deteksi – RiceScanAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--gd:#1b5e20;--gm:#2e7d32;--gl:#66bb6a;--gp:#a5d6a7;--gu:#e8f5e9;--tx:#1a2e1a;--mu:#4a6741;--bg:#f2f7f2}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh}
+
+nav{position:sticky;top:0;z-index:1000;background:rgba(13,31,13,.97);backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(102,187,106,.15);padding:1rem 2rem;
+    display:flex;align-items:center;justify-content:space-between;overflow:visible}
+.nav-brand{display:flex;align-items:center;gap:.6rem;font-family:'Plus Jakarta Sans',sans-serif;
+           font-weight:800;font-size:1.05rem;color:#fff;text-decoration:none}
+.nav-brand-ico{width:32px;height:32px;border-radius:50% 8px 50% 8px;
+               background:linear-gradient(135deg,var(--gl),var(--gm));
+               display:flex;align-items:center;justify-content:center;color:#fff}
+.nav-right{display:flex;align-items:center;gap:1rem;position:relative}
+.nav-right a{display:inline-flex;align-items:center;gap:.35rem;color:rgba(255,255,255,.6);text-decoration:none;font-size:.87rem;
+             font-weight:500;transition:color .2s;display:flex;align-items:center;gap:.3rem}
+.nav-logout{color:#ef9a9a!important;padding:.28rem .8rem;border-radius:20px;border:1px solid rgba(244,67,54,.3);background:rgba(244,67,54,.08)}
+.nav-right a:hover,.nav-right a.active{color:var(--gl)}
+
+.page{max-width:980px;margin:0 auto;padding:2rem 1.5rem}
+
+.page-header{background:linear-gradient(135deg,#0d1f0d,#1b5e20);
+             border-radius:18px;padding:2rem;margin-bottom:2rem;
+             display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+.ph-left h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.5rem;font-weight:800;color:#fff;margin-bottom:.3rem}
+.ph-left p{color:rgba(255,255,255,.5);font-size:.87rem}
+.btn-print{display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.3rem;
+           border-radius:12px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
+           color:#fff;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;
+           cursor:pointer;transition:all .25s;text-decoration:none}
+.btn-print:hover{background:rgba(255,255,255,.2)}
+
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1rem;margin-bottom:2rem}
+.kpi{background:#fff;border-radius:14px;padding:1.1rem 1.25rem;border:1px solid rgba(102,187,106,.12);
+     box-shadow:0 2px 8px rgba(0,0,0,.04);position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gm),var(--gl))}
+.kpi.blue::before{background:linear-gradient(90deg,#1565c0,#42a5f5)}
+.kpi.red::before{background:linear-gradient(90deg,#c62828,#ef5350)}
+.kpi.orange::before{background:linear-gradient(90deg,#e65100,#ffa726)}
+.kpi-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.9rem;font-weight:800;color:var(--tx);line-height:1}
+.kpi-lbl{font-size:.74rem;color:var(--mu);margin-top:.3rem}
+
+.card{background:#fff;border-radius:16px;border:1px solid rgba(102,187,106,.12);
+      box-shadow:0 2px 10px rgba(0,0,0,.05);padding:1.5rem;margin-bottom:1.5rem}
+.card-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:.95rem;font-weight:800;
+            color:var(--tx);margin-bottom:1.25rem;display:flex;align-items:center;gap:.5rem}
+.section-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:.95rem;font-weight:800;
+               color:var(--tx);margin:1.75rem 0 .75rem;display:flex;align-items:center;gap:.5rem;
+               padding-bottom:.5rem;border-bottom:2px solid rgba(102,187,106,.15)}
+
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+thead th{text-align:left;font-size:.73rem;letter-spacing:.07em;text-transform:uppercase;
+         color:var(--mu);padding:.6rem .85rem;border-bottom:2px solid #f0f0f0;font-weight:700;white-space:nowrap}
+tbody td{padding:.7rem .85rem;border-bottom:1px solid #f7f7f7;color:var(--tx);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:#fafffe}
+
+.badge{display:inline-flex;align-items:center;gap:.3rem;padding:.22rem .65rem;border-radius:20px;font-size:.73rem;font-weight:700}
+.badge-red   {background:#fdecea;color:#c62828}
+.badge-blue  {background:#e3f2fd;color:#1565c0}
+.badge-orange{background:#fff3e0;color:#e65100}
+.badge-gray  {background:#f5f5f5;color:#757575}
+.dot-blast {display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef5350;flex-shrink:0}
+.dot-blight{display:inline-block;width:8px;height:8px;border-radius:50%;background:#ffa726;flex-shrink:0}
+.dot-tungro{display:inline-block;width:8px;height:8px;border-radius:50%;background:#42a5f5;flex-shrink:0}
+.dot-unknown{display:inline-block;width:8px;height:8px;border-radius:50%;background:#9e9e9e;flex-shrink:0}
+
+.back-link{display:inline-flex;align-items:center;gap:.4rem;color:var(--mu);text-decoration:none;
+           font-size:.84rem;margin-bottom:1.5rem;padding:.3rem .75rem;border-radius:20px;
+           border:1px solid rgba(102,187,106,.2);background:#fff;transition:all .2s}
+.back-link:hover{border-color:var(--gl);color:var(--gm)}
+
+@media print{
+  nav,.back-link,.btn-print{display:none!important}
+  body{background:#fff!important}
+  .page{padding:.5rem 1rem!important}
+  .card,.kpi{box-shadow:none!important;border:1px solid #ddd!important;break-inside:avoid}
+  .page-header{background:#1b5e20!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  table{font-size:.78rem}
+  .print-header{display:block!important}
+}
+.print-header{display:none;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:2px solid #1b5e20}
+.print-header h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.3rem;font-weight:800;color:#1b5e20}
+.print-header p{font-size:.8rem;color:#555;margin-top:.2rem}
+
+/* ══ NAVBAR PROFILE DROPDOWN ══ */
+/* ── NAV USER AVATAR ── */
+  .nav-user { display:flex; align-items:center; position:relative; }
+
+  /* Profile trigger button */
+  .nav-profile-trigger {
+    display:inline-flex; align-items:center; gap:.55rem;
+    cursor:pointer; padding:.3rem .75rem .3rem .3rem;
+    border-radius:50px; border:1px solid rgba(255,255,255,.15);
+    background:rgba(255,255,255,.06);
+    transition:all .22s; user-select:none;
+  }
+  .nav-profile-trigger:hover { border-color:rgba(102,187,106,.5); background:rgba(102,187,106,.1); }
+  .nav-profile-trigger.open { border-color:rgba(102,187,106,.6); background:rgba(102,187,106,.12); }
+
+  .nav-user-avatar {
+    width:32px; height:32px; border-radius:50%;
+    background:linear-gradient(135deg,var(--g-light),var(--g-mid));
+    display:flex; align-items:center; justify-content:center; font-size:13px;
+    border:2px solid rgba(102,187,106,.5); flex-shrink:0; overflow:hidden;
+  }
+  .nav-user-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+
+  .nav-trigger-name {
+    color:rgba(255,255,255,.85); font-size:.85rem; font-weight:600;
+    max-width:110px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .nav-trigger-chevron {
+    color:rgba(255,255,255,.5); transition:transform .22s; flex-shrink:0;
+  }
+  .nav-profile-trigger.open .nav-trigger-chevron { transform:rotate(180deg); }
+
+  /* Dropdown panel */
+  .nav-profile-dropdown {
+    position:absolute; top:calc(100% + 10px); right:0;
+    width:230px;
+    background:rgba(10,20,12,.85);
+    backdrop-filter:blur(24px) saturate(1.8);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:18px;
+    box-shadow:0 20px 50px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.05) inset;
+    padding:.5rem;
+    opacity:0; pointer-events:none;
+    transform:translateY(-8px) scale(.97);
+    transition:opacity .22s, transform .22s cubic-bezier(.22,1,.36,1);
+    z-index:2000;
+  }
+  .nav-profile-dropdown.open {
+    opacity:1; pointer-events:all; transform:translateY(0) scale(1);
+  }
+
+  /* User info header inside dropdown */
+  .npd-header {
+    padding:.7rem .85rem .6rem;
+    border-bottom:1px solid rgba(255,255,255,.08);
+    margin-bottom:.3rem;
+  }
+  .npd-header-name {
+    font-family:'Plus Jakarta Sans',sans-serif; font-weight:800;
+    font-size:.92rem; color:#fff;
+  }
+  .npd-header-role {
+    font-size:.72rem; color:rgba(255,255,255,.45); margin-top:.1rem;
+  }
+
+  /* Menu items */
+  .npd-item {
+    display:flex; align-items:center; gap:.7rem;
+    padding:.58rem .85rem; border-radius:12px;
+    color:rgba(255,255,255,.7); font-size:.85rem; font-weight:500;
+    text-decoration:none; transition:all .18s; cursor:pointer;
+    border:none; background:none; width:100%; text-align:left;
+  }
+  .npd-item:hover { background:rgba(102,187,106,.12); color:#fff; }
+  .npd-item svg { opacity:.65; flex-shrink:0; transition:opacity .18s; }
+  .npd-item:hover svg { opacity:1; }
+  .npd-item.admin-item { color:#f9a825; }
+  .npd-item.admin-item:hover { background:rgba(249,168,37,.12); color:#f9a825; }
+  .npd-item.admin-item svg { color:#f9a825; }
+
+  /* Separator */
+  .npd-sep { height:1px; background:rgba(255,255,255,.08); margin:.3rem .5rem; }
+
+  /* Logout item */
+  .npd-item.logout-item { color:#ef9a9a; }
+  .npd-item.logout-item:hover { background:rgba(244,67,54,.12); color:#ef5350; }
+  .npd-item.logout-item svg { color:#ef9a9a; }
+
+  /* Unread badge inside dropdown */
+  .npd-badge {
+    margin-left:auto; background:#ef5350; color:#fff;
+    font-size:.62rem; font-weight:700;
+    padding:.1rem .4rem; border-radius:10px;
+  }
+
+
+/* ══ NOTIFICATION BELL ══ */
+.notif-wrap{position:relative;flex-shrink:0;z-index:600}
+.notif-btn{
+  position:relative;width:36px;height:36px;border-radius:10px;
+  border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.07);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .2s;color:rgba(255,255,255,.7);
+}
+.notif-btn:hover,.notif-btn.open{
+  border-color:rgba(102,187,106,.5);background:rgba(102,187,106,.12);color:#fff;
+}
+.notif-badge-dot{
+  position:absolute;top:-4px;right:-4px;
+  min-width:18px;height:18px;border-radius:9px;
+  background:#ef5350;color:#fff;
+  font-size:.62rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 4px;border:2px solid rgba(13,31,13,.97);
+  animation:notifPop .3s cubic-bezier(.22,1,.36,1);
+}
+@keyframes notifPop{from{transform:scale(0)}to{transform:scale(1)}}
+.notif-panel{
+  position:absolute;top:calc(100% + 12px);right:0;
+  width:330px;max-height:460px;
+  background:#fff;border-radius:18px;
+  border:1px solid rgba(102,187,106,.15);
+  box-shadow:0 20px 50px rgba(0,0,0,.2),0 4px 12px rgba(0,0,0,.08);
+  display:none;flex-direction:column;overflow:hidden;
+  opacity:0;pointer-events:none;
+  transform:translateY(-8px) scale(.97);
+  transition:opacity .22s,transform .22s cubic-bezier(.22,1,.36,1);
+  z-index:1500;
+}
+.notif-panel.open{display:flex;opacity:1;pointer-events:all;transform:translateY(0) scale(1)}
+.notif-ph{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.85rem 1rem .65rem;
+  border-bottom:1px solid rgba(102,187,106,.1);flex-shrink:0;
+}
+.notif-ph-title{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:.9rem;color:#1a2e1a}
+.notif-ph-readall{font-size:.73rem;font-weight:600;color:#2e7d32;background:none;border:none;cursor:pointer;padding:.18rem .45rem;border-radius:6px;transition:background .2s}
+.notif-ph-readall:hover{background:#e8f5e9}
+.notif-scroll{overflow-y:auto;flex:1;max-height:340px}
+.notif-scroll::-webkit-scrollbar{width:4px}
+.notif-scroll::-webkit-scrollbar-thumb{background:rgba(102,187,106,.3);border-radius:2px}
+.nitem{
+  display:flex;align-items:flex-start;gap:.7rem;
+  padding:.8rem 1rem;border-bottom:1px solid #f7f7f7;
+  cursor:pointer;transition:background .18s;position:relative;
+}
+.nitem:hover{background:#fafffe}
+.nitem.unread{background:#f5fdf5}
+.nitem.unread::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:0 2px 2px 0;background:#66bb6a}
+.nitem-ico{width:34px;height:34px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.95rem}
+.nitem-ico.scan,.nitem-ico.new_scan{background:#e8f5e9;color:#2e7d32}
+.nitem-ico.chat  {background:#e3f2fd;color:#1565c0}
+.nitem-ico.account{background:#fff8e1;color:#f57f17}
+.nitem-ico.low_conf{background:#fff3e0;color:#e65100}
+.nitem-body{flex:1;min-width:0}
+.nitem-title{font-size:.82rem;font-weight:700;color:#1a2e1a;line-height:1.3;margin-bottom:.18rem}
+.nitem-msg{font-size:.75rem;color:#4a6741;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nitem-time{font-size:.67rem;color:#b0c4b0;margin-top:.22rem}
+.nitem-del{opacity:.45;width:20px;height:20px;border-radius:5px;flex-shrink:0;background:none;border:1px solid rgba(244,67,54,.2);color:#ef9a9a;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s}
+.nitem:hover .nitem-del{opacity:1;background:rgba(244,67,54,.08)}
+.nitem-del:hover{background:rgba(244,67,54,.1);border-color:#ef5350;color:#c62828}
+.notif-empty-state{text-align:center;padding:2.5rem 1rem;color:#b0c4b0}
+.notif-empty-state svg{margin-bottom:.5rem;opacity:.3;display:block;margin-left:auto;margin-right:auto}
+.notif-empty-state p{font-size:.82rem}
+
+/* ══ CHAT INDICATOR in dropdown ══ */
+.npd-chat-dot{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:18px;height:18px;border-radius:9px;
+  background:#ef5350;color:#fff;
+  font-size:.62rem;font-weight:700;
+  padding:0 4px;margin-left:auto;
+  animation:notifPop .3s cubic-bezier(.22,1,.36,1);
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="{{ url_for('index') }}" class="nav-brand">
+    <div class="nav-brand-ico">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 19.34L5.71 21l1-1c1-1 2.25-2.51 3.8-3.6C13 14.82 17.41 14 21 10.4c0-1.11-.29-2.2-1-3.38z"/><path d="M3.82 19.34c.71.71 1.42 1.42 1.89 1.89"/></svg>
+    </div>
+    RiceScan<span style="color:var(--gl)">AI</span>
+  </a>
+<div style="display:flex;align-items:center;gap:.6rem;position:relative;margin-left:auto">
+      <!-- ══ NOTIFICATION BELL ══ -->
+      <div class="notif-wrap" id="userNotifWrap">
+        <button type="button" class="notif-btn" id="userNotifBtn" onclick="toggleUserNotif(event)" title="Notifikasi">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-badge-dot" id="userNotifBadge" style="display:none"></span>
+        </button>
+        <div class="notif-panel" id="userNotifPanel">
+          <div class="notif-ph">
+            <span class="notif-ph-title">Notifikasi</span>
+            <button type="button" class="notif-ph-readall" onclick="userNotifReadAll()">Tandai semua dibaca</button>
+          </div>
+          <div class="notif-scroll" id="userNotifList">
+            <div class="notif-empty-state">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <p>Belum ada notifikasi</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    <div class="nav-profile-trigger" id="navProfileTrigger" onclick="toggleProfileDropdown()">
+      <div class="nav-user-avatar">
+        {% if current_user.avatar_url() %}
+          <img src="{{ current_user.avatar_url() }}" alt="{{ current_user.nama }}">
+        {% else %}👤{% endif %}
+      </div>
+      <span class="nav-trigger-name">{{ current_user.nama.split()[0] }}</span>
+      <svg class="nav-trigger-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="nav-profile-dropdown" id="navProfileDropdown">
+      <div class="npd-header">
+        <div class="npd-header-name">{{ current_user.nama }}</div>
+        <div class="npd-header-role">{{ current_user.username }} · {{ 'Admin' if current_user.is_admin else 'Pengguna' }}</div>
+      </div>
+      {% if current_user.is_admin %}
+      <a href="{{ url_for('admin_dashboard') }}" class="npd-item admin-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Dashboard Admin
+      </a>
+      <a href="{{ url_for('index') }}" class="npd-item admin-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Halaman Deteksi
+      </a>
+      <div class="npd-sep"></div>
+      {% endif %}
+      {% if not current_user.is_admin %}
+      <a href="{{ url_for('index') }}" class="npd-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <div class="npd-sep"></div>
+      {% endif %}
+      <a href="{{ url_for('riwayat') }}" class="npd-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Riwayat
+      </a>
+      <a href="{{ url_for('laporan_user') }}" class="npd-item" style="color:#66bb6a">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Laporan
+      </a>
+      {% if not current_user.is_admin %}
+      <a href="{{ url_for('chat') }}" class="npd-item" id="navChatBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Chat
+        <span id="chatBadge" class="npd-chat-dot" style="display:none"></span>
+      </a>
+      {% endif %}
+      <a href="{{ url_for('profile') }}" class="npd-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Profil Saya
+      </a>
+      <div class="npd-sep"></div>
+      <button class="npd-item logout-item" id="navLogoutBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- Print-only header -->
+  <div class="print-header">
+    <h1>Laporan Deteksi Pribadi – RiceScanAI</h1>
+    <p>{{ current_user.nama }} (@{{ current_user.username }}) &nbsp;·&nbsp; Dicetak {{ now.strftime('%d %B %Y, %H:%M') }} WIB</p>
+  </div>
+
+  <a href="{{ url_for('riwayat') }}" class="back-link">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Kembali ke Riwayat
+  </a>
+
+  <div class="page-header">
+    <div class="ph-left">
+      <h1>Laporan Deteksi Saya</h1>
+      <p>{{ current_user.nama }} · {{ current_user.email }} · Data per {{ now.strftime('%d %B %Y, %H:%M') }} WIB</p>
+    </div>
+    <button class="btn-print" onclick="window.print()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Cetak / Simpan PDF
+    </button>
+  </div>
+
+  <!-- KPI -->
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="kpi-val">{{ total }}</div>
+      <div class="kpi-lbl">Total Deteksi</div>
+    </div>
+    <div class="kpi blue">
+      <div class="kpi-val">{{ avg_conf or '-' }}{% if avg_conf %}<span style="font-size:1rem">%</span>{% endif %}</div>
+      <div class="kpi-lbl">Rata-rata Confidence</div>
+    </div>
+    {% for label, count in stats_dict.items() %}
+    {% set pct = ((count / total) * 100) | round(0) | int if total > 0 else 0 %}
+    {% if 'blast' in label|lower %}<div class="kpi red">
+    {% elif 'blight' in label|lower %}<div class="kpi orange">
+    {% else %}<div class="kpi blue">{% endif %}
+      <div class="kpi-val">{{ count }}</div>
+      <div class="kpi-lbl">{{ label }} ({{ pct }}%)</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Distribusi -->
+  {% if stats_dict and total > 0 %}
+  <div class="card">
+    <div class="card-title">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+      Distribusi Penyakit Terdeteksi
+    </div>
+    {% for label, count in stats_dict.items() %}
+    {% set pct = ((count / total) * 100) | round(1) %}
+    <div style="margin-bottom:1rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:.88rem;margin-bottom:.3rem">
+        <span style="display:flex;align-items:center;gap:.4rem;font-weight:600">
+          {% if 'blast' in label|lower %}<span class="dot-blast"></span>
+          {% elif 'blight' in label|lower %}<span class="dot-blight"></span>
+          {% elif 'tungro' in label|lower %}<span class="dot-tungro"></span>
+          {% else %}<span class="dot-unknown"></span>{% endif %}
+          {{ label }}
+        </span>
+        <span style="font-weight:700;color:var(--gm)">{{ count }} deteksi ({{ pct }}%)</span>
+      </div>
+      <div style="height:10px;background:#e8f5e9;border-radius:5px;overflow:hidden">
+        <div style="height:100%;width:{{ pct }}%;background:linear-gradient(90deg,var(--gm),var(--gl));border-radius:5px"></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Tabel Lengkap -->
+  <div class="section-title">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    Riwayat Lengkap ({{ total }} deteksi)
+  </div>
+
+  <div class="card">
+    {% if riwayat %}
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Hasil Deteksi</th><th>Confidence</th><th>Tanggal & Waktu</th></tr>
+        </thead>
+        <tbody>
+          {% for r in riwayat %}
+          {% set lbl = r.hasil|lower %}
+          <tr>
+            <td style="color:var(--mu);font-size:.8rem">{{ loop.index }}</td>
+            <td>
+              <span class="badge {% if 'blast' in lbl %}badge-red{% elif 'blight' in lbl %}badge-orange{% elif 'tungro' in lbl %}badge-blue{% else %}badge-gray{% endif %}" style="display:inline-flex;align-items:center;gap:.35rem">
+                {% if 'blast' in lbl %}<span class="dot-blast"></span>
+                {% elif 'blight' in lbl %}<span class="dot-blight"></span>
+                {% elif 'tungro' in lbl %}<span class="dot-tungro"></span>
+                {% else %}<span class="dot-unknown"></span>{% endif %}
+                {{ r.hasil }}
+              </span>
+            </td>
+            <td>
+              <span style="font-weight:700;color:var(--gm)">{{ r.confidence }}%</span>
+              <div style="height:4px;background:#e8f5e9;border-radius:2px;margin-top:3px;width:80px">
+                <div style="height:100%;width:{{ [r.confidence, 100]|min }}%;background:linear-gradient(90deg,var(--gm),var(--gl));border-radius:2px"></div>
+              </div>
+            </td>
+            <td style="color:var(--mu);font-size:.82rem;white-space:nowrap">{{ r.created_at.strftime('%d %b %Y, %H:%M') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:2rem;color:var(--mu)">Belum ada riwayat deteksi</div>
+    {% endif %}
+  </div>
+
+  <div style="text-align:center;font-size:.75rem;color:#b0c4b0;margin-top:1.5rem;padding-bottom:2rem">
+    Laporan RiceScanAI &nbsp;·&nbsp; Dicetak {{ now.strftime('%d %B %Y') }}
+  </div>
+
+</div>
+
+<!-- Logout modal -->
+<style>
+#logoutOverlay{
+  position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;
+  background:rgba(0,8,2,.6);
+  backdrop-filter:blur(20px) saturate(1.8);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .3s;
+}
+#logoutOverlay.show{opacity:1;pointer-events:all;}
+#logoutModal{
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.16);
+  backdrop-filter:blur(36px) saturate(2.2);
+  border-radius:26px;padding:2.25rem 2rem 1.75rem;
+  width:340px;max-width:90vw;
+  transform:translateY(24px) scale(.95);
+  transition:transform .32s cubic-bezier(.22,1,.36,1);
+  box-shadow:0 40px 80px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.07) inset;
+  text-align:center;
+}
+#logoutOverlay.show #logoutModal{transform:translateY(0) scale(1);}
+#logoutModal .lm-icon{
+  width:62px;height:62px;border-radius:50%;margin:0 auto 1.1rem;
+  background:rgba(239,83,80,.18);
+  border:1.5px solid rgba(239,83,80,.4);
+  backdrop-filter:blur(10px);
+  display:flex;align-items:center;justify-content:center;color:#ff8a80;
+  box-shadow:0 0 28px rgba(239,83,80,.25);
+}
+#logoutModal h3{
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:1.1rem;font-weight:800;
+  color:#fff;margin-bottom:.4rem;
+  text-shadow:0 1px 8px rgba(0,0,0,.4);
+}
+#logoutModal p{
+  font-size:.86rem;color:rgba(255,255,255,.6);
+  line-height:1.65;margin-bottom:1.6rem;
+}
+#logoutModal .lm-actions{display:flex;gap:.75rem;}
+#logoutModal .lm-cancel{
+  flex:1;padding:.72rem;border-radius:12px;
+  font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;
+  cursor:pointer;
+  background:rgba(255,255,255,.1);
+  border:1.5px solid rgba(255,255,255,.2);
+  color:rgba(255,255,255,.85);transition:all .22s;
+  backdrop-filter:blur(8px);
+}
+#logoutModal .lm-cancel:hover{
+  background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.35);
+}
+#logoutModal .lm-confirm{
+  flex:1;padding:.72rem;border-radius:12px;
+  font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:700;
+  cursor:pointer;
+  background:linear-gradient(135deg,#ef5350,#c62828);
+  border:none;color:#fff;transition:all .22s;
+  box-shadow:0 4px 18px rgba(198,40,40,.45);
+  text-decoration:none;display:flex;align-items:center;justify-content:center;gap:.4rem;
+}
+#logoutModal .lm-confirm:hover{
+  transform:translateY(-2px);box-shadow:0 8px 26px rgba(198,40,40,.6);
+}
+</style>
+<div id="logoutOverlay">
+  <div id="logoutModal">
+    <div class="lm-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
+    <h3>Konfirmasi Logout</h3>
+    <p>Apakah Anda yakin ingin keluar dari sesi ini?</p>
+    <div class="lm-actions">
+      <button class="lm-cancel" id="logoutCancel">Batal</button>
+      <a href="{{ url_for('logout') }}" class="lm-confirm">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Ya, Logout
+      </a>
+    </div>
+  </div>
+</div>
+<script>
+// Profile Dropdown
+function toggleProfileDropdown(){
+  var t=document.getElementById('navProfileTrigger'),d=document.getElementById('navProfileDropdown');
+  t.classList.toggle('open'); d.classList.toggle('open');
+  if(d.classList.contains('open')) updateChatBadge();
+}
+document.addEventListener('click', function(e){
+  var t = document.getElementById('navProfileTrigger');
+  var d = document.getElementById('navProfileDropdown');
+  if(t && d && !t.contains(e.target) && !d.contains(e.target)){
+    t.classList.remove('open'); d.classList.remove('open');
+  }
+});
+
+document.getElementById('navLogoutBtn').addEventListener('click',e=>{e.preventDefault();document.getElementById('logoutOverlay').classList.add('show')});
+document.getElementById('logoutCancel').addEventListener('click',()=>document.getElementById('logoutOverlay').classList.remove('show'));
+document.getElementById('logoutOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('logoutOverlay'))document.getElementById('logoutOverlay').classList.remove('show')});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('logoutOverlay').classList.remove('show')});
+</script>
+<script>
+// ══ NOTIFICATION SYSTEM (USER) ══
+(function(){
+  var ICONS = {
+    scan:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+    chat:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+    account: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>',
+    low_conf:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    system:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+    new_scan:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+    new_user:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  };
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+  // ── Toggle ──
+  window.toggleUserNotif = function(e){
+    if(e){ e.stopPropagation(); }
+    var pan = document.getElementById('userNotifPanel');
+    var btn = document.getElementById('userNotifBtn');
+    if(!pan || !btn) return;
+    if(pan.classList.contains('open')){ closeUserNotif(); return; }
+    btn.classList.add('open');
+    pan.classList.add('open');
+    fetchUserNotifs();
+    // close profile dropdown
+    var pd = document.getElementById('navProfileDropdown');
+    var pt = document.getElementById('navProfileTrigger');
+    if(pd) pd.classList.remove('open');
+    if(pt) pt.classList.remove('open');
+  };
+
+  function closeUserNotif(){
+    var pan = document.getElementById('userNotifPanel');
+    var btn = document.getElementById('userNotifBtn');
+    if(pan) pan.classList.remove('open');
+    if(btn) btn.classList.remove('open');
+  }
+
+  // ── Close on outside click / Escape ──
+  document.addEventListener('click', function(e){
+    var wrap = document.getElementById('userNotifWrap');
+    if(wrap && !wrap.contains(e.target)) closeUserNotif();
+  });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeUserNotif(); });
+
+  // ── Render ──
+  function render(data){
+    var badge = document.getElementById('userNotifBadge');
+    var list  = document.getElementById('userNotifList');
+    if(!badge || !list) return;
+
+    // Badge count
+    if(data.unread > 0){
+      badge.textContent = data.unread > 9 ? '9+' : data.unread;
+      badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
+    }
+
+    // Update chat dot
+    var chatDot = document.getElementById('navChatNotifDot');
+    if(chatDot){
+      var unreadChats = (data.items||[]).filter(function(n){ return n.type==='chat' && !n.is_read; });
+      chatDot.textContent  = unreadChats.length > 9 ? '9+' : unreadChats.length;
+      chatDot.style.display = unreadChats.length > 0 ? 'inline-flex' : 'none';
+    }
+
+    if(!data.items || data.items.length === 0){
+      list.innerHTML = '<div class="notif-empty-state"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><p>Belum ada notifikasi</p></div>';
+      return;
+    }
+
+    list.innerHTML = data.items.map(function(n){
+      var ico = ICONS[n.type] || ICONS.system;
+      return '<div class="nitem ' + (n.is_read ? '' : 'unread') + '" data-notif-id="' + n.id + '" data-notif-link="' + encodeURIComponent(n.link || '/') + '">'
+        + '<div class="nitem-ico ' + esc(n.type) + '">' + ico + '</div>'
+        + '<div class="nitem-body">'
+        +   '<div class="nitem-title">' + esc(n.title) + '</div>'
+        +   '<div class="nitem-msg">'   + esc(n.message) + '</div>'
+        +   '<div class="nitem-time">'  + esc(n.time_ago) + '</div>'
+        + '</div>'
+        + '<button type="button" class="nitem-del" data-del-id="' + n.id + '" title="Hapus notifikasi">'
+        +   '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+        + '</button>'
+        + '</div>';
+    }).join('');
+  }
+
+  // ── Event delegation on list (set once, works for dynamically rendered items) ──
+  document.addEventListener('DOMContentLoaded', function(){
+    var list = document.getElementById('userNotifList');
+    if(!list) return;
+    list.addEventListener('click', function(e){
+      // Tombol hapus
+      var delBtn = e.target.closest('.nitem-del');
+      if(delBtn){
+        e.stopPropagation();
+        var id = delBtn.getAttribute('data-del-id');
+        fetch('/api/notifications/' + id + '/delete', {method:'POST', credentials:'same-origin'})
+          .then(function(){ fetchUserNotifs(); })
+          .catch(function(){});
+        return;
+      }
+      // Klik item notifikasi → baca + navigasi
+      var item = e.target.closest('.nitem');
+      if(item){
+        var id   = item.getAttribute('data-notif-id');
+        var link = decodeURIComponent(item.getAttribute('data-notif-link') || '/');
+        if(id){
+          fetch('/api/notifications/' + id + '/read', {method:'POST', credentials:'same-origin'}).catch(function(){});
+        }
+        closeUserNotif();
+        if(link && link !== '#') window.location.href = link;
+      }
+    });
+  });
+
+  // ── Fetch ──
+  function fetchUserNotifs(){
+    fetch('/api/notifications', {credentials:'same-origin'})
+      .then(function(r){ if(!r.ok) throw new Error(); return r.json(); })
+      .then(function(d){ if(d) render(d); })
+      .catch(function(){});
+  }
+
+  // ── Tandai semua dibaca (dipanggil dari tombol di HTML) ──
+  window.userNotifReadAll = function(){
+    fetch('/api/notifications/read-all', {method:'POST', credentials:'same-origin'})
+      .then(function(){ fetchUserNotifs(); })
+      .catch(function(){});
+  };
+
+  // ── Chat badge ──
+  function updateChatBadge(){
+    fetch('/chat/unread-count', {credentials:'same-origin'})
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        var count = d.count || 0;
+        var b = document.getElementById('chatBadge');
+        if(!b) return;
+        b.textContent     = count > 9 ? '9+' : count;
+        b.style.display   = count > 0 ? 'inline-flex' : 'none';
+      }).catch(function(){});
+  }
+
+  // ── Tutup notif saat profile dropdown dibuka ──
+  var _origToggle = window.toggleProfileDropdown;
+  window.toggleProfileDropdown = function(){
+    closeUserNotif();
+    if(typeof _origToggle === 'function') _origToggle();
+  };
+
+  // ── Init ──
+  fetchUserNotifs();
+  updateChatBadge();
+  setInterval(fetchUserNotifs, 12000);
+  setInterval(updateChatBadge, 5000);
+
+})();
+</script>
+</body>
+</html>
