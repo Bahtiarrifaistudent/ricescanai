@@ -43,3 +43,9 @@ logs/
 # Jupyter
 .ipynb_checkpoints/
 notebooks/.ipynb_checkpoints/
+
+webapp/
+data/
+notebooks/
+src/
+venv/
