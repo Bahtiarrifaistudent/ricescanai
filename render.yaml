@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: ricescanai
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn webapp.app:app --workers 1 --timeout 120 --bind 0.0.0.0:$PORT
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ricescanai-db
+          property: connectionString
+      - key: MODEL_PATH
+        value: ./model/rice_leaf_model.keras
+      - key: FLASK_DEBUG
+        value: "false"
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+
+databases:
+  - name: ricescanai-db
+    plan: free
+    databaseName: ricescanai
+    user: ricescanai
